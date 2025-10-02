@@ -3,54 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FocusFlight (Earth & Stars)</title>
+  <title>FocusFlight (Full Earth & Stars Background)</title>
 
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    crossorigin=""
-  ></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet" />
 
   <style>
-    html,body {margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#111827;color:#f3f4f6}
-    #globe-container {position:absolute;top:0;left:0;width:100%;height:100%;z-index:1}
-    .screen {position:absolute;top:0;left:0;width:100%;height:100%;display:none;z-index:2}
-    .screen.active {display:flex}
-    #map {position:absolute;top:0;left:0;width:100%;height:100%;z-index:3}
-    .ui-overlay {z-index:4}
-    .barcode {font-family:'Libre Barcode 39 Text',cursive;font-size:60px;color:#e5e7eb;text-align:center;white-space:nowrap}
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
+    body { font-family:'Inter',sans-serif; }
+    /* Fullscreen Three.js canvas */
+    #globe-container { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
+    /* All UI screens transparent to show background */
+    .screen { position:fixed; top:0; left:0; width:100%; height:100%; display:none; z-index:2; background:transparent; }
+    .screen.active { display:flex; }
+    /* Leaflet map overlay */
+    #map { position:absolute; top:0; left:0; width:100%; height:100%; z-index:3; }
+    .ui-overlay { z-index:4; }
+    /* Reuse your UI styles */
+    .barcode { font-family:'Libre Barcode 39 Text',cursive; font-size:60px; color:#E5E7EB; text-align:center; white-space:nowrap; }
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    .animate-pulse-slow{animation:pulse 3s ease-in-out infinite}
+    .animate-pulse-slow{animation:pulse 3s linear infinite}
     @keyframes pulse-marker{0%{transform:scale(.95);box-shadow:0 0 0 0 rgba(251,191,36,.7)}70%{transform:scale(1.2);box-shadow:0 0 0 10px rgba(251,191,36,0)}100%{transform:scale(.95);box-shadow:0 0 0 0 rgba(251,191,36,0)}}
     .pulse-marker{background:#fbbf24;border-radius:50%;width:15px;height:15px;border:2px solid #fff;animation:pulse-marker 2s infinite}
     .leaflet-marker-icon.airplane-marker{transition:none!important;will-change:transform}
   </style>
 </head>
 <body>
-  <!-- Fullscreen Earth & Stars -->
+  <!-- Fullscreen Earth & Stars Background -->
   <div id="globe-container"></div>
 
   <!-- SETUP SCREEN -->
-  <div id="setup-screen" class="screen active flex-col items-center justify-center p-8">
-    <h1 class="text-white text-3xl sm:text-4xl font-bold mb-4">Set Your Destination</h1>
+  <div id="setup-screen" class="screen flex flex-col items-center justify-center p-8">
+    <h1 class="text-white text-3xl font-bold mb-4">Set Your Destination</h1>
     <p class="text-gray-400 mb-6">Rotate the globe to select Departure & Arrival.</p>
     <div id="globe-inner" class="w-full max-w-2xl aspect-square rounded-lg mb-6"></div>
     <div class="flex justify-between w-full max-w-2xl mb-4">
@@ -59,120 +54,102 @@
     </div>
     <div class="w-full max-w-md mb-6">
       <label class="block text-center text-gray-400 mb-2">Flight Time: <span id="duration-label" class="text-white font-bold">60</span> minutes</label>
-      <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+      <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg cursor-pointer" />
     </div>
-    <button id="confirm-flight-btn" disabled class="bg-amber-500 text-gray-900 py-3 px-12 rounded-lg font-bold disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400 transition">Generate Boarding Pass</button>
+    <button id="confirm-flight-btn" disabled class="bg-amber-500 text-gray-900 py-3 px-12 rounded-lg font-bold disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400">Generate Boarding Pass</button>
     <button id="logbook-btn" class="absolute top-4 right-4 bg-gray-700/50 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600/50">Logbook</button>
   </div>
 
-  <!-- BOARDING SCREEN (copy your existing markup here) -->
+  <!-- BOARDING SCREEN (insert your existing markup) -->
 
   <!-- FOCUS SCREEN -->
   <div id="focus-screen" class="screen flex-col">
     <div id="map"></div>
-    <!-- Copy your time/distance UI here -->
+    <!-- Insert your time & distance overlays and Abort Flight button -->
   </div>
 
-  <!-- SUMMARY SCREEN (existing markup) -->
-
-  <!-- LOGBOOK SCREEN (existing markup) -->
+  <!-- SUMMARY SCREEN and LOGBOOK SCREEN (your existing markup) -->
 
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
   <script type="importmap">
-    {"imports":{"three":"https://unpkg.com/three@0.157.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.157.0/examples/jsm/"}}
+    {"imports":{
+      "three":"https://unpkg.com/three@0.157.0/build/three.module.js",
+      "three/addons/":"https://unpkg.com/three@0.157.0/examples/jsm/"
+    }}
   </script>
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // Cities data (same as before)
+    // City data (same as before)
     const cities = [ /* ... */ ];
 
-    // State
-    const state = { currentScreen:'setup', departureCity:null, arrivalCity:null, durationMinutes:60, flightLog:JSON.parse(localStorage.getItem('flightLog'))||[], globeInit:false, flightDistance:0, timer:null, flightAnim:null };
-    const screens = {
-      setup:document.getElementById('setup-screen'),
-      boarding:document.getElementById('boarding-screen'),
-      focus:document.getElementById('focus-screen'),
-      summary:document.getElementById('summary-screen'),
-      logbook:document.getElementById('logbook-screen')
-    };
+    let scene, camera, renderer, controls, earth, star, raycaster, mouse, cityGrp=new THREE.Group();
 
-    // Three.js globe
-    const container = document.getElementById('globe-inner');
-    let scene, camera, renderer, controls, earth, starSphere, raycaster, mouse, cityGroup=new THREE.Group();
-
-    function latLonToVec(lat,lon,r=1){
+    function latLonToVec(lat, lon, r=1){
       const phi=(90-lat)*Math.PI/180, theta=(lon+180)*Math.PI/180;
       return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));
     }
 
     function initGlobe(){
-      if(state.globeInit) return;
       scene=new THREE.Scene();
-      camera=new THREE.PerspectiveCamera(75,container.clientWidth/container.clientHeight,0.1,1000);
+
+      camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
       camera.position.z=2.5;
+
       renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-      renderer.setSize(container.clientWidth,container.clientHeight);
+      renderer.setSize(window.innerWidth,window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
-      container.appendChild(renderer.domElement);
+      document.getElementById('globe-container').appendChild(renderer.domElement);
 
       controls=new OrbitControls(camera,renderer.domElement);
-      controls.enableDamping=true;controls.dampingFactor=0.05;
-      controls.enablePan=false;controls.minDistance=1.5;controls.maxDistance=5;
+      controls.enableDamping=true;controls.dampingFactor=0.05;controls.enablePan=false;controls.minDistance=1.5;controls.maxDistance=5;
 
       scene.add(new THREE.AmbientLight(0x404040,2));
       const dl=new THREE.DirectionalLight(0xffffff,1); dl.position.set(5,3,5); scene.add(dl);
 
       const loader=new THREE.TextureLoader();
-      const earthTex=loader.load('https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg');
-      earth=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),new THREE.MeshPhongMaterial({map:earthTex,shininess:5}));
+      // Earth map
+      const earthMap=loader.load('https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg');
+      earth=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),new THREE.MeshPhongMaterial({map:earthMap,shininess:5}));
       scene.add(earth);
+      // Starfield
+      const starMap=loader.load('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg/2560px-Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg');
+      const starGeo=new THREE.SphereGeometry(80,64,64);
+      star=new THREE.Mesh(starGeo,new THREE.MeshBasicMaterial({map:starMap,side:THREE.BackSide}));
+      scene.add(star);
 
-      const starTex=loader.load('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg/2560px-Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg');
-      const starG=new THREE.SphereGeometry(80,64,64);
-      starSphere=new THREE.Mesh(starG,new THREE.MeshBasicMaterial({map:starTex,side:THREE.BackSide}));
-      scene.add(starSphere);
-
+      // City markers
       cities.forEach(c=>{
         const m=new THREE.Mesh(new THREE.SphereGeometry(0.008,16,16),new THREE.MeshBasicMaterial({color:0xFBBF24}));
-        m.position.copy(latLonToVec(c.lat,c.lon,1)); m.userData=c; cityGroup.add(m);
+        m.position.copy(latLonToVec(c.lat,c.lon,1));m.userData=c;cityGrp.add(m);
       });
-      earth.add(cityGroup);
+      earth.add(cityGrp);
 
-      raycaster=new THREE.Raycaster(); mouse=new THREE.Vector2();
-      container.addEventListener('click',onGlobeClick);
+      raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+      document.getElementById('globe-inner').addEventListener('click',onGlobeClick);
+
       window.addEventListener('resize',()=>{
-        camera.aspect=container.clientWidth/container.clientHeight;
+        camera.aspect=window.innerWidth/window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth,container.clientHeight);
+        renderer.setSize(window.innerWidth,window.innerHeight);
       });
 
-      requestAnimationFrame(renderGlobe);
-      state.globeInit=true;
-    }
-
-    function renderGlobe(){
-      controls.update();
-      renderer.render(scene,camera);
-      requestAnimationFrame(renderGlobe);
+      (function render(){controls.update();renderer.render(scene,camera);requestAnimationFrame(render);})();
     }
 
     function onGlobeClick(e){
-      e.preventDefault();
-      const r=container.getBoundingClientRect();
-      mouse.x=((e.clientX-r.left)/r.width)*2-1;
-      mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+      const rect=document.getElementById('globe-inner').getBoundingClientRect();
+      mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+      mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
       raycaster.setFromCamera(mouse,camera);
-      const ints=raycaster.intersectObjects(cityGroup.children);
-      if(ints.length) handleCityClick(ints[0].object.userData);
+      const hits=raycaster.intersectObjects(cityGrp.children);
+      if(hits.length) handleCityClick(hits[0].object.userData);
     }
 
-    // UI + Leaflet logic preserved here
-    // handleCityClick, updateUI, setupBoardingPass, startFlight, endFlight, navigateTo, showLogbook ...
-    // (Use exactly your existing code for these functions)
+    // --- Insert your existing UI/Leaflet/flight logic here unchanged ---
+    // handleCityClick, updateUI, setupBoardingPass, startFlight, endFlight, navigateTo, showLogbook
 
-    // Initialize globe and UI
     initGlobe();
     navigateTo('setup');
   </script>
