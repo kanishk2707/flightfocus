@@ -23,7 +23,8 @@
         }
         .screen { display: none; }
         .screen.active { display: flex; }
-        #globe-container { cursor: grab; background-color: #111827; }
+        /* === CSS CHANGE HERE === */
+        #globe-container { cursor: grab; background-color: transparent; }
         #globe-container:active { cursor: grabbing; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; background-color: #2a2a2a; z-index: 10;}
         .ui-overlay { z-index: 20; } /* Ensures UI is on top of the map */
@@ -79,25 +80,25 @@
 
     <div id="boarding-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
          <div class="w-full max-w-sm bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 relative">
-            <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
-                <div><p class="text-5xl font-black text-white" id="boarding-departure-code"></p><p class="text-gray-400" id="boarding-departure-city"></p></div>
-                <div class="text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg><p class="text-xs text-center" id="boarding-distance"></p></div>
-                <div class="text-right"><p class="text-5xl font-black text-white" id="boarding-arrival-code"></p><p class="text-gray-400" id="boarding-arrival-city"></p></div>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mt-4 text-left">
-                <div><p class="text-xs text-gray-400">FLIGHT NO.</p><p class="font-bold text-white" id="boarding-flight-no"></p></div>
-                <div><p class="text-xs text-gray-400">DISTANCE</p><p class="font-bold text-white" id="boarding-distance-2"></p></div>
-                <div><p class="text-xs text-gray-400">BOARDING</p><p class="font-bold text-white animate-pulse-slow">Now</p></div>
-                <div><p class="text-xs text-gray-400">DATE</p><p class="font-bold text-white" id="boarding-date"></p></div>
-            </div>
-            <div class="mt-6"><p class="barcode" id="barcode-text"></p></div>
-        </div>
-        <div class="mt-8 text-center">
-            <div class="flex items-center justify-center gap-3"><svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg><h2 class="text-2xl font-bold">Airplane Mode</h2></div>
-            <p class="text-gray-400 mt-2">Prepare for a distraction-free journey.</p>
-        </div>
-        <button id="start-flight-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-16 rounded-lg transition-all hover:bg-amber-400 text-lg">Boarding</button>
-        <button id="boarding-back-btn" class="absolute top-5 left-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Back</button>
+             <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
+                 <div><p class="text-5xl font-black text-white" id="boarding-departure-code"></p><p class="text-gray-400" id="boarding-departure-city"></p></div>
+                 <div class="text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg><p class="text-xs text-center" id="boarding-distance"></p></div>
+                 <div class="text-right"><p class="text-5xl font-black text-white" id="boarding-arrival-code"></p><p class="text-gray-400" id="boarding-arrival-city"></p></div>
+             </div>
+             <div class="grid grid-cols-2 gap-4 mt-4 text-left">
+                 <div><p class="text-xs text-gray-400">FLIGHT NO.</p><p class="font-bold text-white" id="boarding-flight-no"></p></div>
+                 <div><p class="text-xs text-gray-400">DISTANCE</p><p class="font-bold text-white" id="boarding-distance-2"></p></div>
+                 <div><p class="text-xs text-gray-400">BOARDING</p><p class="font-bold text-white animate-pulse-slow">Now</p></div>
+                 <div><p class="text-xs text-gray-400">DATE</p><p class="font-bold text-white" id="boarding-date"></p></div>
+             </div>
+             <div class="mt-6"><p class="barcode" id="barcode-text"></p></div>
+         </div>
+         <div class="mt-8 text-center">
+             <div class="flex items-center justify-center gap-3"><svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg><h2 class="text-2xl font-bold">Airplane Mode</h2></div>
+             <p class="text-gray-400 mt-2">Prepare for a distraction-free journey.</p>
+         </div>
+         <button id="start-flight-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-16 rounded-lg transition-all hover:bg-amber-400 text-lg">Boarding</button>
+         <button id="boarding-back-btn" class="absolute top-5 left-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Back</button>
     </div>
 
     <div id="focus-screen" class="screen w-full h-full flex-col items-center justify-center bg-gray-900 relative">
@@ -122,17 +123,11 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         
         const cities = [
-            // North America
             { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 },
-            // South America
             { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 },
-            // Europe
             { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 },
-            // Asia
             { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 },
-            // Africa
             { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 },
-            // Oceania
             { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 }
         ].map((city, i) => ({ ...city, id: i }));
 
@@ -148,30 +143,43 @@
             const container = document.getElementById('globe-container');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 2.5;
+            camera.position.z = 2; // Adjusted camera position slightly for a better initial view
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
-            scene.add(new THREE.AmbientLight(0x404040, 2));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1); dirLight.position.set(5, 3, 5); scene.add(dirLight);
             
+            // Lighting setup
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 3, 5);
+            scene.add(dirLight);
+
             const textureLoader = new THREE.TextureLoader();
-            
-            // REALISTIC EARTH TEXTURE - Replace base64 with actual Earth map
-            const earthTexture = textureLoader.load('https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg');
-            earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), new THREE.MeshPhongMaterial({ map: earthTexture, shininess: 5 }));
-            scene.add(earth);
-            
-            // STARFIELD BACKGROUND - Large inverted sphere with star texture
-            const starTexture = textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg/2560px-Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg');
-            const starGeometry = new THREE.SphereGeometry(80, 64, 64);
+
+            // STARFIELD BACKGROUND
+            const starTexture = textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png');
+            const starGeometry = new THREE.SphereGeometry(100, 64, 64); // Larger sphere
             const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide });
             const starSphere = new THREE.Mesh(starGeometry, starMaterial);
             scene.add(starSphere);
-            
+
+            // REALISTIC EARTH
+            const earthMaterial = new THREE.MeshPhongMaterial({
+                map: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg'),
+                // Specular map makes oceans reflective
+                specularMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png'),
+                // Bump map adds terrain depth
+                bumpMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png'),
+                bumpScale: 0.01,
+                shininess: 10 // Controls the sharpness of the reflection
+            });
+            earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), earthMaterial);
+            scene.add(earth);
+
+            // Airport markers
             const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
             cities.forEach(city => {
                 const marker = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 16), markerMaterial.clone());
@@ -184,6 +192,7 @@
             container.addEventListener('click', onGlobeClick);
             animate(); state.globeInitialized = true;
         }
+
         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
         function latLonToVector3(lat, lon, radius) { const phi = (90 - lat) * (Math.PI / 180); const theta = (lon + 180) * (Math.PI / 180); return new THREE.Vector3(-radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta)); }
         function onGlobeClick(event) { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); mouse.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1; mouse.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(cityMarkers.children); if (intersects.length > 0) { handleCityClick(intersects[0].object.userData.city); } }
@@ -216,7 +225,6 @@
             navigateTo('focus');
             const { departureCity, arrivalCity } = state;
 
-            // Helper function to calculate bearing for plane rotation
             const calculateBearing = (startLat, startLng, destLat, destLng) => {
                 startLat = startLat * Math.PI / 180;
                 startLng = startLng * Math.PI / 180;
@@ -243,7 +251,6 @@
             const destinationIcon = L.divIcon({ className: 'pulse-marker', iconSize: [15, 15] });
             L.marker([arrivalCity.lat, arrivalCity.lon], { icon: destinationIcon }).addTo(map);
 
-            // NAVIGATION ARROW SVG - POINTS UP BY DEFAULT, ROTATES TO SHOW DIRECTION
             const navigationArrowSvg = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" stroke-width="1.5">
                     <path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#FBBF24" stroke="#FFFFFF" stroke-width="1"/>
@@ -263,12 +270,10 @@
                 rotationOrigin: 'center center'
             });
 
-            // Calculate initial bearing and rotate plane marker
             const initialBearing = calculateBearing(departureCity.lat, departureCity.lon, arrivalCity.lat, arrivalCity.lon);
             planeMarker.setRotationAngle(initialBearing);
             planeMarker.addTo(map);
 
-            // Implement the take-off zoom animation
             map.fitBounds(latlngs, { padding: [50, 50] });
             
             setTimeout(() => {
@@ -279,13 +284,11 @@
                     let startTime = performance.now();
                     const initialDistance = state.flightDistance;
                     
-                    // ULTRA-SMOOTH CONTINUOUS MOVEMENT USING requestAnimationFrame
                     function animateFlightContinuous(currentTime) {
                         const elapsedSeconds = (currentTime - startTime) / 1000;
                         const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
                         const progress = Math.min(1, elapsedSeconds / totalSeconds);
                         
-                        // Update timer display
                         const hours = Math.floor(remainingSeconds / 3600);
                         const minutes = Math.floor((remainingSeconds % 3600) / 60);
                         const seconds = Math.floor(remainingSeconds % 60);
@@ -294,18 +297,14 @@
                         document.getElementById('distance-remaining').textContent = 
                             `${Math.round(initialDistance * (1 - progress))} km`;
 
-                        // Calculate smooth position interpolation
                         const newLat = departureCity.lat + (arrivalCity.lat - departureCity.lat) * progress;
                         const newLon = departureCity.lon + (arrivalCity.lon - departureCity.lon) * progress;
                         
-                        // Calculate bearing for rotation
                         const bearing = calculateBearing(newLat, newLon, arrivalCity.lat, arrivalCity.lon);
                         
-                        // Update plane position and rotation SMOOTHLY
                         planeMarker.setLatLng([newLat, newLon]);
                         planeMarker.setRotationAngle(bearing);
                         
-                        // Smooth map centering
                         map.panTo([newLat, newLon], { animate: false });
 
                         if (remainingSeconds > 0) {
@@ -315,7 +314,6 @@
                         }
                     }
                     
-                    // Start the continuous animation
                     flightAnimation = requestAnimationFrame(animateFlightContinuous);
                 });
             }, 1500);
