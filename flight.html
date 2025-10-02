@@ -5,111 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FocusFlight (Earth & Stars)</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Leaflet CSS & JS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    crossorigin=""
-  ></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet" />
 
   <style>
-    html,body { margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#111827;color:#f3f4f6 }
-    #globe-container { position:absolute;top:0;left:0;width:100%;height:100%;z-index:1 }
-    .screen { position:absolute;top:0;left:0;width:100%;height:100%;display:none;z-index:2 }
-    .screen.active { display:flex }
-    #map { position:absolute;top:0;left:0;width:100%;height:100%;z-index:3 }
-    .ui-overlay { z-index:4 }
-    .barcode { font-family:'Libre Barcode 39 Text',cursive;font-size:60px;color:#e5e7eb;text-align:center;white-space:nowrap }
-    @keyframes pulse {0%,100%{opacity:1}50%{opacity:.5}}
-    .animate-pulse-slow { animation:pulse 3s cubic-bezier(0.4,0,0.6,1) infinite }
-    @keyframes pulse-marker {
-      0% {transform:scale(0.95);box-shadow:0 0 0 0 rgba(251,191,36,0.7)}
-      70%{transform:scale(1.2);box-shadow:0 0 0 10px rgba(251,191,36,0)}
-      100%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(251,191,36,0)}
-    }
-    .pulse-marker { background:#fbbf24;border-radius:50%;width:15px;height:15px;border:2px solid #fff;animation:pulse-marker 2s infinite }
-    .leaflet-marker-icon.airplane-marker { transition:none!important;will-change:transform }
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
+    body { font-family:'Inter',sans-serif; }
+    #globe-container { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
+    .screen { position:fixed; top:0; left:0; width:100%; height:100%; display:none; z-index:2; background:transparent; }
+    .screen.active { display:flex; }
+    #map { position:absolute; top:0; left:0; width:100%; height:100%; z-index:3; }
+    .ui-overlay { z-index:4; }
+    .barcode { font-family:'Libre Barcode 39 Text',cursive; font-size:60px; color:#E5E7EB; text-align:center; white-space:nowrap }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .animate-pulse-slow{animation:pulse 3s linear infinite}
+    @keyframes pulse-marker{0%{transform:scale(.95);box-shadow:0 0 0 0 rgba(251,191,36,.7)}70%{transform:scale(1.2);box-shadow:0 0 0 10px rgba(251,191,36,0)}100%{transform:scale(.95);box-shadow:0 0 0 0 rgba(251,191,36,0)}}
+    .pulse-marker{background:#fbbf24;border-radius:50%;width:15px;height:15px;border:2px solid #fff;animation:pulse-marker 2s infinite}
+    .leaflet-marker-icon.airplane-marker{transition:none!important;will-change:transform}
   </style>
 </head>
 <body>
   <div id="globe-container"></div>
 
-  <!-- SETUP SCREEN -->
-  <div id="setup-screen" class="screen active flex-col items-center justify-center p-8">
-    <h1 class="text-white text-3xl sm:text-4xl font-bold mb-4">Set Your Destination</h1>
-    <p class="text-gray-400 mb-6">Rotate the globe to select Departure & Arrival.</p>
-    <div id="globe-container-inner" class="w-full max-w-2xl aspect-square rounded-lg mb-6"></div>
-    <div class="flex justify-between w-full max-w-2xl mb-4">
+  <div id="setup-screen" class="screen flex flex-col items-center justify-center p-8 gap-6">
+    <h1 class="text-white text-3xl sm:text-4xl font-bold">Set Your Destination</h1>
+    <p class="text-gray-400">Rotate the globe to select Departure & Arrival.</p>
+    <div id="globe-inner" class="w-full max-w-2xl aspect-square rounded-lg"></div>
+    <div class="flex justify-between w-full max-w-2xl">
       <div class="text-center"><p class="text-gray-400">DEPARTURE</p><p id="departure-text" class="text-white text-2xl font-bold">- - -</p></div>
       <div class="text-center"><p class="text-gray-400">ARRIVAL</p><p id="arrival-text" class="text-white text-2xl font-bold">- - -</p></div>
     </div>
-    <div class="w-full max-w-md mb-6">
+    <div class="w-full max-w-md">
       <label class="block text-center text-gray-400 mb-2">Flight Time: <span id="duration-label" class="text-white font-bold">60</span> minutes</label>
-      <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
+      <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg cursor-pointer" />
     </div>
-    <button id="confirm-flight-btn" disabled class="bg-amber-500 text-gray-900 py-3 px-12 rounded-lg font-bold disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400 transition">Generate Boarding Pass</button>
+    <button id="confirm-flight-btn" disabled class="bg-amber-500 text-gray-900 py-3 px-12 rounded-lg font-bold disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400">Generate Boarding Pass</button>
     <button id="logbook-btn" class="absolute top-4 right-4 bg-gray-700/50 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600/50">Logbook</button>
   </div>
 
-  <!-- BOARDING SCREEN -->
   <div id="boarding-screen" class="screen flex-col items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
-    <!-- reuse your boarding-pass HTML here (unchanged) -->
+    <div class="w-full max-w-sm bg-gray-800 rounded-2xl p-6 border border-gray-700 relative">
+      <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
+        <div><p id="boarding-departure-code" class="text-5xl font-black text-white"></p><p id="boarding-departure-city" class="text-gray-400"></p></div>
+        <div class="text-gray-400 text-center"><svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg><p id="boarding-distance" class="text-xs"></p></div>
+        <div class="text-right"><p id="boarding-arrival-code" class="text-5xl font-black text-white"></p><p id="boarding-arrival-city" class="text-gray-400"></p></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mt-4 text-left">
+        <div><p class="text-xs text-gray-400">FLIGHT NO.</p><p id="boarding-flight-no" class="font-bold text-white"></p></div>
+        <div><p class="text-xs text-gray-400">DISTANCE</p><p id="boarding-distance-2" class="font-bold text-white"></p></div>
+        <div><p class="text-xs text-gray-400">BOARDING</p><p class="font-bold text-white animate-pulse-slow">Now</p></div>
+        <div><p class="text-xs text-gray-400">DATE</p><p id="boarding-date" class="font-bold text-white"></p></div>
+      </div>
+      <p id="barcode-text" class="barcode mt-6"></p>
+    </div>
+    <div class="mt-8 text-center">
+      <div class="flex items-center justify-center gap-3 mb-3"><svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg><h2 class="text-2xl font-bold">Airplane Mode</h2></div>
+      <p class="text-gray-400">Prepare for a distraction-free journey.</p>
+    </div>
+    <button id="start-flight-btn" class="mt-6 bg-amber-500 text-gray-900 py-3 px-16 rounded-lg font-bold hover:bg-amber-400">Boarding</button>
+    <button id="boarding-back-btn" class="absolute top-4 left-4 bg-gray-700/50 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600/50">Back</button>
   </div>
 
-  <!-- FOCUS SCREEN -->
-  <div id="focus-screen" class="screen flex-col items-center justify-center bg-gray-900 relative">
+  <div id="focus-screen" class="screen">
     <div id="map"></div>
-    <!-- reuse your time/distance UI overlays and abort button here -->
+    <div class="ui-overlay absolute bottom-10 left-10 bg-black/50 p-4 rounded-lg backdrop-blur-sm text-white"><p>Time Remaining</p><p id="time-remaining" class="text-5xl font-black">01:00:00</p></div>
+    <div class="ui-overlay absolute bottom-10 right-10 bg-black/50 p-4 rounded-lg backdrop-blur-sm text-white text-right"><p>Distance Remaining</p><p id="distance-remaining" class="text-5xl font-black">0 km</p></div>
+    <button id="abort-flight-btn" class="ui-overlay absolute top-4 right-4 bg-red-600/80 text-white py-2 px-4 rounded-lg font-bold hover:bg-red-500">Abort Flight</button>
   </div>
 
-  <!-- SUMMARY SCREEN -->
-  <div id="summary-screen" class="screen items-center justify-center p-8 bg-black/80">
-    <!-- reuse your summary screen HTML -->
+  <div id="summary-screen" class="screen flex flex-col items-center justify-center p-8 bg-black/80">
+    <h2 id="summary-title" class="text-5xl font-bold text-amber-400 mb-4"></h2>
+    <p id="summary-text" class="text-xl text-gray-300"></p>
+    <button id="summary-back-btn" class="mt-6 bg-amber-500 text-gray-900 py-3 px-12 rounded-lg font-bold hover:bg-amber-400">Plan Next Flight</button>
   </div>
 
-  <!-- LOGBOOK SCREEN -->
-  <div id="logbook-screen" class="screen flex-col items-center justify-start p-8 bg-gray-900">
-    <!-- reuse your logbook HTML -->
+  <div id="logbook-screen" class="screen flex flex-col items-start p-8 bg-gray-900">
+    <h2 class="text-4xl font-bold text-white mb-6">Flight Logbook</h2>
+    <div id="logbook-list" class="w-full max-w-2xl h-3/4 overflow-y-auto bg-gray-800 p-4 rounded-lg"></div>
+    <button id="logbook-back-btn" class="mt-6 bg-gray-700 text-white py-3 px-12 rounded-lg font-bold hover:bg-gray-600">Back to Globe</button>
   </div>
 
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
   <script type="importmap">
-    {"imports":{
-      "three":"https://unpkg.com/three@0.157.0/build/three.module.js",
-      "three/addons/":"https://unpkg.com/three@0.157.0/examples/jsm/"
-    }}
+    {"imports":{"three":"https://unpkg.com/three@0.157.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.157.0/examples/jsm/"}}
   </script>
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // GLOBAL STATE
-    const state = {
-      currentScreen:'setup', departureCity:null, arrivalCity:null,
-      durationMinutes:60, flightLog:JSON.parse(localStorage.getItem('flightLog'))||[],
-      globeInit:false, flightDistance:0, timerId:null, flightAnim:null
-    };
-    const screens = {
+    // Cities array
+    const cities = [
+      { name:"New York", code:"JFK", lat:40.64, lon:-73.77 },
+      { name:"Los Angeles",code:"LAX",lat:33.94,lon:-118.40 },
+      { name:"Chicago", code:"ORD", lat:41.97, lon:-87.90 },
+      { name:"Toronto", code:"YYZ", lat:43.67, lon:-79.62 },
+      { name:"Mexico City",code:"MEX", lat:19.43, lon:-99.07 },
+      { name:"Vancouver", code:"YVR", lat:49.19, lon:-123.18 },
+      { name:"São Paulo", code:"GRU", lat:-23.43, lon:-46.47 },
+      { name:"Buenos Aires",code:"EZE", lat:-34.82, lon:-58.53 },
+      { name:"Bogotá", code:"BOG", lat:4.70, lon:-74.14 },
+      { name:"Lima", code:"LIM", lat:-12.02, lon:-77.11 },
+      { name:"Rio de Janeiro",code:"GIG",lat:-22.81,lon:-43.25 },
+      { name:"London", code:"LHR", lat:51.47, lon:-0.45 },
+      { name:"Paris", code:"CDG", lat:49.00, lon:2.59 },
+      { name:"Istanbul",code:"IST", lat:41.27, lon:28.75 },
+      { name:"Amsterdam",code:"AMS", lat:52.31, lon:4.76 },
+      { name:"Frankfurt", code:"FRA", lat:50.03, lon:8.56 },
+      { name:"Madrid", code:"MAD", lat:40.49, lon:-3.56 },
+      { name:"Rome", code:"FCO", lat:41.80, lon:12.23 },
+      { name:"Tokyo", code:"HND", lat:35.54, lon:139.77 },
+      { name:"Dubai", code:"DXB", lat:25.25, lon:55.36 },
+      { name:"Singapore",code:"SIN",lat:1.36,lon:103.99 },
+      { name:"Hong Kong",code:"HKG",lat:22.30,lon:113.91 },
+      { name:"Shanghai",code:"PVG",lat:31.14,lon:121.80 },
+      { name:"Seoul", code:"ICN", lat:37.46, lon:126.44 },
+      { name:"Doha", code:"DOH", lat:25.27, lon:51.56 },
+      { name:"Bangkok",code:"BKK", lat:13.69, lon:100.75 },
+      { name:"Mumbai", code:"BOM", lat:19.08, lon:72.86 },
+      { name:"Delhi", code:"DEL", lat:28.55, lon:77.10 },
+      { name:"Beijing", code:"PEK", lat:40.08, lon:116.58 },
+      { name:"Hosur", code:"HSR", lat:12.74, lon:77.82 },
+      { name:"Cairo", code:"CAI", lat:30.11, lon:31.40 },
+      { name:"Johannesburg",code:"JNB",lat:-26.13,lon:28.24 },
+      { name:"Lagos", code:"LOS", lat:6.57, lon:3.32 },
+      { name:"Nairobi", code:"NBO", lat:-1.33, lon:36.92 },
+      { name:"Addis Ababa",code:"ADD",lat:8.97,lon:38.79 },
+      { name:"Sydney", code:"SYD", lat:-33.94, lon:151.17 },
+      { name:"Melbourne",code:"MEL",lat:-37.66,lon:144.84 },
+      { name:"Auckland", code:"AKL", lat:-37.00, lon:174.78 }
+    ];
+
+    // State & references
+    const state={currentScreen:'setup',departureCity:null,arrivalCity:null,durationMinutes:60,flightLog:JSON.parse(localStorage.getItem('flightLog'))||[],globeInit:false,flightDistance:0,timer:null,flightAnim:null};
+    const screens={
       setup:document.getElementById('setup-screen'),
       boarding:document.getElementById('boarding-screen'),
       focus:document.getElementById('focus-screen'),
@@ -117,32 +153,21 @@
       logbook:document.getElementById('logbook-screen')
     };
 
-    // THREE.JS GLOBE SETUP
-    const globeContainer = document.getElementById('globe-container-inner');
-    let scene, camera, renderer, controls, earth, starSphere, raycaster, mouse, cityGroup=new THREE.Group();
+    // Three.js setup
+    const container = document.getElementById('globe-inner');
+    let scene,camera,renderer,controls,earth,starSphere,raycaster,mouse,cityGrp=new THREE.Group();
 
-    function latLonToVec(lat,lon,r=1){
-      const phi=(90-lat)*Math.PI/180, theta=(lon+180)*Math.PI/180;
-      return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));
-    }
+    function latLonToVec(lat,lon,r=1){const phi=(90-lat)*Math.PI/180,theta=(lon+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
 
     function initGlobe(){
       if(state.globeInit) return;
       scene=new THREE.Scene();
-      camera=new THREE.PerspectiveCamera(75,globeContainer.clientWidth/globeContainer.clientHeight,0.1,1000);
-      camera.position.z=2.5;
-      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-      renderer.setSize(globeContainer.clientWidth,globeContainer.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      globeContainer.appendChild(renderer.domElement);
+      camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,2000);camera.position.z=2.5;
+      renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(window.devicePixelRatio);document.getElementById('globe-container').appendChild(renderer.domElement);
 
-      controls=new OrbitControls(camera,renderer.domElement);
-      controls.enableDamping=true;controls.dampingFactor=0.05;
-      controls.enablePan=false;controls.minDistance=1.5;controls.maxDistance=5;
+      controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.05;controls.enablePan=false;controls.minDistance=1.5;controls.maxDistance=5;
 
-      scene.add(new THREE.AmbientLight(0x404040,2));
-      const dl=new THREE.DirectionalLight(0xffffff,1);
-      dl.position.set(5,3,5);scene.add(dl);
+      scene.add(new THREE.AmbientLight(0x404040,2));const dl=new THREE.DirectionalLight(0xffffff,1);dl.position.set(5,3,5);scene.add(dl);
 
       const loader=new THREE.TextureLoader();
       const earthTex=loader.load('https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg');
@@ -151,40 +176,37 @@
 
       const starTex=loader.load('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg/2560px-Milky_Way_Night_Sky_Black_Rock_Desert_Nevada.jpg');
       const starGeo=new THREE.SphereGeometry(80,64,64);
-      const starMat=new THREE.MeshBasicMaterial({map:starTex,side:THREE.BackSide});
-      starSphere=new THREE.Mesh(starGeo,starMat);
+      starSphere=new THREE.Mesh(starGeo,new THREE.MeshBasicMaterial({map:starTex,side:THREE.BackSide}));
       scene.add(starSphere);
 
-      // Add city points (same as before)
-      const markerMat=new THREE.MeshBasicMaterial({color:0xFBBF24});
       cities.forEach(c=>{
-        const m=new THREE.Mesh(new THREE.SphereGeometry(0.008,16,16),markerMat.clone());
-        const p=latLonToVec(c.lat,c.lon,1);
-        m.position.copy(p);m.userData=c;cityGroup.add(m);
+        const m=new THREE.Mesh(new THREE.SphereGeometry(0.008,16,16),new THREE.MeshBasicMaterial({color:0xFBBF24}));
+        m.position.copy(latLonToVec(c.lat,c.lon,1));m.userData=c;cityGrp.add(m);
       });
-      earth.add(cityGroup);
+      earth.add(cityGrp);
 
       raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
-      globeContainer.addEventListener('click',onGlobeClick);
-      window.addEventListener('resize',()=>{camera.aspect=globeContainer.clientWidth/globeContainer.clientHeight;camera.updateProjectionMatrix();renderer.setSize(globeContainer.clientWidth,globeContainer.clientHeight);});
-      animateGlobe();state.globeInit=true;
-    }
+      container.addEventListener('click',onGlobeClick);
 
-    function animateGlobe(){requestAnimationFrame(animateGlobe);controls.update();renderer.render(scene,camera);}
+      window.addEventListener('resize',()=>{
+        camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);
+      });
+
+      (function anim(){controls.update();renderer.render(scene,camera);requestAnimationFrame(anim);})();
+      state.globeInit=true;
+    }
 
     function onGlobeClick(e){
-      const r=globeContainer.getBoundingClientRect();
+      const r=container.getBoundingClientRect();
       mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;
       raycaster.setFromCamera(mouse,camera);
-      const ints=raycaster.intersectObjects(cityGroup.children);
-      if(ints.length) handleCityClick(ints[0].object.userData);
+      const hits=raycaster.intersectObjects(cityGrp.children);
+      if(hits.length) handleCityClick(hits[0].object.userData);
     }
 
-    // --- Insert your existing handleCityClick, UI updates, Leaflet flight logic, etc. ---
+    // Insert all your existing functions: handleCityClick, updateUI, setupBoardingPass, startFlight, endFlight, navigateTo, showLogbook
 
-    // Initialize globe on setup screen
     initGlobe();
-    // Show setup screen and bind UI event listeners (reuse your code)
     navigateTo('setup');
   </script>
 </body>
