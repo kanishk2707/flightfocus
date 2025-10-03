@@ -13,8 +13,7 @@
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
      <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
-
-     <style>
+    <link rel="icon" href="data:,">     <style>
          body {
              font-family: 'Inter', sans-serif;
              background-color: #111827;
@@ -22,7 +21,11 @@
              overflow: hidden;
          }
          .screen { display: none; }
-         .screen.active { display: flex; }
+        /* === CSS CHANGE HERE === */
+         .screen.active { 
+            display: flex;
+            flex-direction: column; 
+        }
          #globe-container { cursor: grab; background-color: transparent; }
          #globe-container:active { cursor: grabbing; }
          #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; background-color: #2a2a2a; z-index: 10;}
@@ -59,7 +62,7 @@
  </head>
  <body class="w-screen h-screen flex items-center justify-center">
 
-     <div id="setup-screen" class="screen active w-full h-full flex-col items-center justify-center p-4 sm:p-8">
+        <div id="setup-screen" class="screen active w-full h-full items-center justify-center p-4 sm:p-8">
          <div class="text-center mb-4">
              <h1 class="text-3xl sm:text-4xl font-bold text-white">Set Your Destination</h1>
              <p class="text-md sm:text-lg text-gray-400">Rotate the globe to select Departure & Arrival.</p>
@@ -77,7 +80,7 @@
          <button id="logbook-btn" class="absolute top-5 right-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Logbook</button>
      </div>
 
-     <div id="boarding-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
+     <div id="boarding-screen" class="screen w-full h-full items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
           <div class="w-full max-w-sm bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 relative">
               <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
                   <div><p class="text-5xl font-black text-white" id="boarding-departure-code"></p><p class="text-gray-400" id="boarding-departure-city"></p></div>
@@ -100,7 +103,7 @@
           <button id="boarding-back-btn" class="absolute top-5 left-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Back</button>
      </div>
 
-     <div id="focus-screen" class="screen w-full h-full flex-col items-center justify-center bg-gray-900 relative">
+     <div id="focus-screen" class="screen w-full h-full items-center justify-center bg-gray-900 relative">
          <div id="map"></div>
          <div class="ui-overlay absolute bottom-10 left-10 text-white bg-black/50 p-4 rounded-lg backdrop-blur-sm">
              <p class="text-lg">Time Remaining</p><p id="time-remaining" class="text-5xl font-black">01:00:00</p>
@@ -111,8 +114,8 @@
          <button id="abort-flight-btn" class="ui-overlay absolute top-5 right-5 bg-red-600/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500">Abort Flight</button>
      </div>
 
-     <div id="summary-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/80"><h2 id="summary-title" class="text-5xl font-bold text-amber-400"></h2><p id="summary-text" class="text-xl text-gray-300 mt-4"></p><button id="summary-back-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg hover:bg-amber-400">Plan Next Flight</button></div>
-     <div id="logbook-screen" class="screen w-full h-full flex-col items-center justify-start p-8 bg-gray-900"><h2 class="text-4xl font-bold text-white mb-8">Flight Logbook</h2><div id="logbook-list" class="w-full max-w-2xl h-3/4 overflow-y-auto bg-gray-800 p-4 rounded-lg"></div><button id="logbook-back-btn" class="mt-8 bg-gray-700 text-white font-bold py-3 px-12 rounded-lg hover:bg-gray-600">Back to Globe</button></div>
+     <div id="summary-screen" class="screen w-full h-full items-center justify-center p-8 bg-black/80"><h2 id="summary-title" class="text-5xl font-bold text-amber-400"></h2><p id="summary-text" class="text-xl text-gray-300 mt-4"></p><button id="summary-back-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg hover:bg-amber-400">Plan Next Flight</button></div>
+     <div id="logbook-screen" class="screen w-full h-full items-center justify-start p-8 bg-gray-900"><h2 class="text-4xl font-bold text-white mb-8">Flight Logbook</h2><div id="logbook-list" class="w-full max-w-2xl h-3/4 overflow-y-auto bg-gray-800 p-4 rounded-lg"></div><button id="logbook-back-btn" class="mt-8 bg-gray-700 text-white font-bold py-3 px-12 rounded-lg hover:bg-gray-600">Back to Globe</button></div>
 
      <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
      <script type="importmap">{"imports": {"three": "https://unpkg.com/three@0.157.0/build/three.module.js","three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"}}</script>
@@ -122,64 +125,12 @@
          import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         
          const cities = [
-             // === Original Cities ===
-             { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 },
-             { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 },
-             { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 },
-             { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 },
-             { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 },
-             { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 },
-             // === Additional Cities ===
-             { name: "Salem (India)", code: "SXV", lat: 11.76, lon: 78.06 },
-             { name: "Atlanta", code: "ATL", lat: 33.64, lon: -84.42 },
-             { name: "Dallas", code: "DFW", lat: 32.89, lon: -97.04 },
-             { name: "Denver", code: "DEN", lat: 39.85, lon: -104.67 },
-             { name: "Seattle", code: "SEA", lat: 47.45, lon: -122.30 },
-             { name: "Miami", code: "MIA", lat: 25.79, lon: -80.29 },
-             { name: "Houston", code: "IAH", lat: 29.99, lon: -95.34 },
-             { name: "Montreal", code: "YUL", lat: 45.47, lon: -73.74 },
-             { name: "Las Vegas", code: "LAS", lat: 36.08, lon: -115.15 },
-             { name: "San Francisco", code: "SFO", lat: 37.62, lon: -122.37 },
-             { name: "Boston", code: "BOS", lat: 42.36, lon: -71.00 },
-             { name: "Santiago", code: "SCL", lat: -33.39, lon: -70.78 },
-             { name: "Caracas", code: "CCS", lat: 10.60, lon: -66.99 },
-             { name: "Moscow", code: "SVO", lat: 55.97, lon: 37.41 },
-             { name: "Dublin", code: "DUB", lat: 53.42, lon: -6.27 },
-             { name: "Zurich", code: "ZRH", lat: 47.46, lon: 8.54 },
-             { name: "Vienna", code: "VIE", lat: 48.11, lon: 16.56 },
-             { name: "Copenhagen", code: "CPH", lat: 55.61, lon: 12.65 },
-             { name: "Stockholm", code: "ARN", lat: 59.65, lon: 17.91 },
-             { name: "Oslo", code: "OSL", lat: 60.19, lon: 11.10 },
-             { name: "Athens", code: "ATH", lat: 37.93, lon: 23.94 },
-             { name: "Lisbon", code: "LIS", lat: 38.77, lon: -9.13 },
-             { name: "Prague", code: "PRG", lat: 50.10, lon: 14.26 },
-             { name: "Brussels", code: "BRU", lat: 50.90, lon: 4.48 },
-             { name: "Kuala Lumpur", code: "KUL", lat: 2.74, lon: 101.70 },
-             { name: "Manila", code: "MNL", lat: 14.50, lon: 121.01 },
-             { name: "Jakarta", code: "CGK", lat: -6.12, lon: 106.65 },
-             { name: "Taipei", code: "TPE", lat: 25.07, lon: 121.23 },
-             { name: "Riyadh", code: "RUH", lat: 24.95, lon: 46.70 },
-             { name: "Jeddah", code: "JED", lat: 21.67, lon: 39.15 },
-             { name: "Tel Aviv", code: "TLV", lat: 32.01, lon: 34.88 },
-             { name: "Karachi", code: "KHI", lat: 24.90, lon: 67.16 },
-             { name: "Kolkata", code: "CCU", lat: 22.65, lon: 88.44 },
-             { name: "Chennai", code: "MAA", lat: 12.99, lon: 80.18 },
-             { name: "Bengaluru", code: "BLR", lat: 13.19, lon: 77.70 },
-             { name: "Hyderabad", code: "HYD", lat: 17.24, lon: 78.42 },
-             { name: "Ho Chi Minh City", code: "SGN", lat: 10.81, lon: 106.65 },
-             { name: "Casablanca", code: "CMN", lat: 33.36, lon: -7.58 },
-             { name: "Cape Town", code: "CPT", lat: -33.96, lon: 18.60 },
-             { name: "Algiers", code: "ALG", lat: 36.69, lon: 3.21 },
-             { name: "Accra", code: "ACC", lat: 5.60, lon: -0.16 },
-             { name: "Dakar", code: "DSS", lat: 14.67, lon: -17.22 },
-             { name: "Perth", code: "PER", lat: -31.94, lon: 115.96 },
-             { name: "Brisbane", code: "BNE", lat: -27.38, lon: 153.11 },
-             { name: "Wellington", code: "WLG", lat: -41.32, lon: 174.80 },
-             { name: "Nadi", code: "NAN", lat: -17.75, lon: 177.44 },
-             { name: "Panama City", code: "PTY", lat: 9.07, lon: -79.38 },
-             { name: "Helsinki", code: "HEL", lat: 60.31, lon: 24.96 },
-             { name: "Warsaw", code: "WAW", lat: 52.16, lon: 20.96 },
-             { name: "Budapest", code: "BUD", lat: 47.43, lon: 19.25 }
+             { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 }, 
+             { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 }, 
+             { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 }, 
+             { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 }, 
+             { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 }, 
+             { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 } 
          ].map((city, i) => ({ ...city, id: i }));
 
          let state = { currentScreen: 'setup', departureCity: null, arrivalCity: null, durationMinutes: 60, flightLog: JSON.parse(localStorage.getItem('flightLog')) || [], timerInterval: null, globeInitialized: false, flightDistance: 0 };
@@ -201,7 +152,7 @@
              container.appendChild(renderer.domElement);
              controls = new OrbitControls(camera, renderer.domElement);
              controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
-            
+             
              // Lighting setup
              scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
              const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -250,10 +201,10 @@
          function handleCityClick(city) { if (!state.departureCity) { state.departureCity = city; highlightMarker(city, true); } else if (!state.arrivalCity && city.id !== state.departureCity.id) { state.arrivalCity = city; highlightMarker(city, true); drawFlightArc(); } else { highlightMarker(state.departureCity, false); if(state.arrivalCity) highlightMarker(state.arrivalCity, false); if(flightPathArc) earth.remove(flightPathArc); state.departureCity = city; state.arrivalCity = null; highlightMarker(city, true); } updateUI(); }
          function highlightMarker(city, selected) { const marker = cityMarkers.children.find(m => m.userData.city.id === city.id); if(marker) { marker.material.color.set(selected ? 0xffffff : 0xFBBF24); marker.scale.set(selected ? 1.5 : 1, selected ? 1.5 : 1, selected ? 1.5 : 1); } }
          function drawFlightArc() { if (flightPathArc) earth.remove(flightPathArc); const startPos = latLonToVector3(state.departureCity.lat, state.departureCity.lon, 1); const endPos = latLonToVector3(state.arrivalCity.lat, state.arrivalCity.lon, 1); const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5); midPoint.normalize().multiplyScalar(midPoint.length() + startPos.distanceTo(endPos) * 0.4); const curve = new THREE.QuadraticBezierCurve3(startPos, midPoint, endPos); const points = curve.getPoints(50); const geometry = new THREE.BufferGeometry().setFromPoints(points); flightPathArc = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xFBBF24, linewidth: 2, transparent: true, opacity: 0.8 })); earth.add(flightPathArc); }
-        
+         
          function navigateTo(screenName) { Object.values(screens).forEach(s => s.classList.remove('active')); screens[screenName].classList.add('active'); state.currentScreen = screenName; if (screenName === 'setup' && !state.globeInitialized) initGlobe(); }
          function updateUI() { document.getElementById('departure-text').textContent = state.departureCity ? `${state.departureCity.name} (${state.departureCity.code})` : '- - -'; document.getElementById('arrival-text').textContent = state.arrivalCity ? `${state.arrivalCity.name} (${state.arrivalCity.code})` : '- - -'; document.getElementById('confirm-flight-btn').disabled = !(state.departureCity && state.arrivalCity); }
-        
+         
          function setupBoardingPass() {
              const { departureCity, arrivalCity } = state;
              const R = 6371; // Earth radius in km
@@ -262,7 +213,7 @@
              const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(departureCity.lat * Math.PI / 180) * Math.cos(arrivalCity.lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
              const distance = Math.round(R * c);
-            
+             
              state.flightDistance = distance;
 
              const flightNo = `FF${Math.floor(1000 + Math.random() * 9000)}`; const date = new Date(); const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
@@ -288,9 +239,9 @@
                  brng = brng * 180 / Math.PI;
                  return (brng + 360) % 360;
              };
-            
+             
              map = L.map('map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
-            
+             
              L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
                  maxZoom: 20,
                  attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -307,14 +258,14 @@
                      <path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#FBBF24" stroke="#FFFFFF" stroke-width="1"/>
                  </svg>
              `;
-            
+             
              const planeIcon = L.divIcon({
                  html: navigationArrowSvg,
                  className: 'airplane-marker',
                  iconSize: [36, 36],
                  iconAnchor: [18, 18],
              });
-            
+             
              planeMarker = L.marker([departureCity.lat, departureCity.lon], {
                  icon: planeIcon,
                  rotationAngle: 0,
@@ -326,7 +277,7 @@
              planeMarker.addTo(map);
 
              map.fitBounds(latlngs, { padding: [50, 50] });
-            
+             
              setTimeout(() => {
                  map.flyTo([departureCity.lat, departureCity.lon], 12, { duration: 4 });
 
@@ -334,28 +285,28 @@
                      const totalSeconds = state.durationMinutes * 60;
                      let startTime = performance.now();
                      const initialDistance = state.flightDistance;
-                    
+                     
                      function animateFlightContinuous(currentTime) {
                          const elapsedSeconds = (currentTime - startTime) / 1000;
                          const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
                          const progress = Math.min(1, elapsedSeconds / totalSeconds);
-                        
+                         
                          const hours = Math.floor(remainingSeconds / 3600);
                          const minutes = Math.floor((remainingSeconds % 3600) / 60);
                          const seconds = Math.floor(remainingSeconds % 60);
-                         document.getElementById('time-remaining').textContent =
+                         document.getElementById('time-remaining').textContent = 
                              `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                         document.getElementById('distance-remaining').textContent =
+                         document.getElementById('distance-remaining').textContent = 
                              `${Math.round(initialDistance * (1 - progress))} km`;
 
                          const newLat = departureCity.lat + (arrivalCity.lat - departureCity.lat) * progress;
                          const newLon = departureCity.lon + (arrivalCity.lon - departureCity.lon) * progress;
-                        
+                         
                          const bearing = calculateBearing(newLat, newLon, arrivalCity.lat, arrivalCity.lon);
-                        
+                         
                          planeMarker.setLatLng([newLat, newLon]);
                          planeMarker.setRotationAngle(bearing);
-                        
+                         
                          map.panTo([newLat, newLon], { animate: false });
 
                          if (remainingSeconds > 0) {
@@ -364,7 +315,7 @@
                              endFlight(true);
                          }
                      }
-                    
+                     
                      flightAnimation = requestAnimationFrame(animateFlightContinuous);
                  });
              }, 1500);
@@ -404,9 +355,9 @@
              });
              navigateTo('logbook');
          }
-        
-         document.getElementById('duration-slider').addEventListener('input', (e) => {
-             state.durationMinutes = parseInt(e.target.value, 10);
+         
+         document.getElementById('duration-slider').addEventListener('input', (e) => { 
+             state.durationMinutes = parseInt(e.target.value, 10); 
              document.getElementById('duration-label').textContent = `${state.durationMinutes}`;
          });
          document.getElementById('confirm-flight-btn').addEventListener('click', () => { setupBoardingPass(); navigateTo('boarding'); });
@@ -416,7 +367,7 @@
          document.getElementById('summary-back-btn').addEventListener('click', resetSetup);
          document.getElementById('logbook-btn').addEventListener('click', showLogbook);
          document.getElementById('logbook-back-btn').addEventListener('click', () => navigateTo('setup'));
-        
+         
          navigateTo('setup');
      </script>
  </body>
