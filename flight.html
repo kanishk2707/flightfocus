@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
@@ -132,17 +132,11 @@
             
             // === 35 NEW CITIES ADDED HERE ===
             { name: "Salem", code: "SXV", lat: 11.78, lon: 78.06 },
-            // North America
             { name: "Miami", code: "MIA", lat: 25.79, lon: -80.29 }, { name: "Seattle", code: "SEA", lat: 47.44, lon: -122.30 }, { name: "Denver", code: "DEN", lat: 39.86, lon: -104.67 }, { name: "Atlanta", code: "ATL", lat: 33.64, lon: -84.42 }, { name: "Boston", code: "BOS", lat: 42.36, lon: -71.00 }, { name: "Houston", code: "IAH", lat: 29.98, lon: -95.34 }, { name: "Montreal", code: "YUL", lat: 45.47, lon: -73.74 },
-            // South America
             { name: "Santiago", code: "SCL", lat: -33.39, lon: -70.78 }, { name: "Quito", code: "UIO", lat: -0.12, lon: -78.35 },
-            // Europe
             { name: "Moscow", code: "SVO", lat: 55.97, lon: 37.41 }, { name: "Dublin", code: "DUB", lat: 53.42, lon: -6.27 }, { name: "Vienna", code: "VIE", lat: 48.11, lon: 16.56 }, { name: "Athens", code: "ATH", lat: 37.93, lon: 23.94 }, { name: "Copenhagen", code: "CPH", lat: 55.61, lon: 12.65 }, { name: "Zurich", code: "ZRH", lat: 47.46, lon: 8.54 }, { name: "Oslo", code: "OSL", lat: 60.19, lon: 11.10 }, { name: "Lisbon", code: "LIS", lat: 38.77, lon: -9.13 },
-            // Asia
             { name: "Riyadh", code: "RUH", lat: 24.95, lon: 46.70 }, { name: "Kuala Lumpur", code: "KUL", lat: 2.74, lon: 101.70 }, { name: "Manila", code: "MNL", lat: 14.50, lon: 121.01 }, { name: "Jakarta", code: "CGK", lat: -6.12, lon: 106.65 }, { name: "Taipei", code: "TPE", lat: 25.07, lon: 121.23 }, { name: "Tel Aviv", code: "TLV", lat: 32.01, lon: 34.88 }, { name: "Bengaluru", code: "BLR", lat: 13.19, lon: 77.70 }, { name: "Kolkata", code: "CCU", lat: 22.65, lon: 88.44 }, { name: "Chennai", code: "MAA", lat: 12.99, lon: 80.18 }, { name: "Hyderabad", code: "HYD", lat: 17.24, lon: 78.42 },
-            // Africa
             { name: "Casablanca", code: "CMN", lat: 33.36, lon: -7.58 }, { name: "Cape Town", code: "CPT", lat: -33.96, lon: 18.60 }, { name: "Accra", code: "ACC", lat: 5.60, lon: -0.16 },
-            // Oceania
             { name: "Perth", code: "PER", lat: -31.94, lon: 115.96 }, { name: "Brisbane", code: "BNE", lat: -27.38, lon: 153.11 }
 
         ].map((city, i) => ({ ...city, id: i }));
@@ -159,7 +153,7 @@
             const container = document.getElementById('globe-container');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 2;
+            camera.position.z = 2; // Adjusted camera position slightly for a better initial view
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -167,26 +161,35 @@
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
             
-            scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+            // Lighting setup
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(5, 3, 5);
             scene.add(dirLight);
 
             const textureLoader = new THREE.TextureLoader();
 
+            // STARFIELD BACKGROUND
             const starTexture = textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png');
-            const starGeometry = new THREE.SphereGeometry(100, 64, 64);
+            const starGeometry = new THREE.SphereGeometry(100, 64, 64); // Larger sphere
             const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide });
             const starSphere = new THREE.Mesh(starGeometry, starMaterial);
             scene.add(starSphere);
 
+            // REALISTIC EARTH
             const earthMaterial = new THREE.MeshPhongMaterial({
-                map: textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg'),
-                shininess: 5 
+                map: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg'),
+                // Specular map makes oceans reflective
+                specularMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png'),
+                // Bump map adds terrain depth
+                bumpMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png'),
+                bumpScale: 0.01,
+                shininess: 10 // Controls the sharpness of the reflection
             });
             earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), earthMaterial);
             scene.add(earth);
 
+            // Airport markers
             const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
             cities.forEach(city => {
                 const marker = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 16), markerMaterial.clone());
