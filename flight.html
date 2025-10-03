@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
@@ -23,7 +23,6 @@
         }
         .screen { display: none; }
         .screen.active { display: flex; }
-        /* === CSS CHANGE HERE === */
         #globe-container { cursor: grab; background-color: transparent; }
         #globe-container:active { cursor: grabbing; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; background-color: #2a2a2a; z-index: 10;}
@@ -123,12 +122,29 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         
         const cities = [
+            // Original Cities
             { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 },
             { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 },
             { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 },
             { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 },
             { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 },
-            { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 }
+            { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 },
+            
+            // === 35 NEW CITIES ADDED HERE ===
+            { name: "Salem", code: "SXV", lat: 11.78, lon: 78.06 },
+            // North America
+            { name: "Miami", code: "MIA", lat: 25.79, lon: -80.29 }, { name: "Seattle", code: "SEA", lat: 47.44, lon: -122.30 }, { name: "Denver", code: "DEN", lat: 39.86, lon: -104.67 }, { name: "Atlanta", code: "ATL", lat: 33.64, lon: -84.42 }, { name: "Boston", code: "BOS", lat: 42.36, lon: -71.00 }, { name: "Houston", code: "IAH", lat: 29.98, lon: -95.34 }, { name: "Montreal", code: "YUL", lat: 45.47, lon: -73.74 },
+            // South America
+            { name: "Santiago", code: "SCL", lat: -33.39, lon: -70.78 }, { name: "Quito", code: "UIO", lat: -0.12, lon: -78.35 },
+            // Europe
+            { name: "Moscow", code: "SVO", lat: 55.97, lon: 37.41 }, { name: "Dublin", code: "DUB", lat: 53.42, lon: -6.27 }, { name: "Vienna", code: "VIE", lat: 48.11, lon: 16.56 }, { name: "Athens", code: "ATH", lat: 37.93, lon: 23.94 }, { name: "Copenhagen", code: "CPH", lat: 55.61, lon: 12.65 }, { name: "Zurich", code: "ZRH", lat: 47.46, lon: 8.54 }, { name: "Oslo", code: "OSL", lat: 60.19, lon: 11.10 }, { name: "Lisbon", code: "LIS", lat: 38.77, lon: -9.13 },
+            // Asia
+            { name: "Riyadh", code: "RUH", lat: 24.95, lon: 46.70 }, { name: "Kuala Lumpur", code: "KUL", lat: 2.74, lon: 101.70 }, { name: "Manila", code: "MNL", lat: 14.50, lon: 121.01 }, { name: "Jakarta", code: "CGK", lat: -6.12, lon: 106.65 }, { name: "Taipei", code: "TPE", lat: 25.07, lon: 121.23 }, { name: "Tel Aviv", code: "TLV", lat: 32.01, lon: 34.88 }, { name: "Bengaluru", code: "BLR", lat: 13.19, lon: 77.70 }, { name: "Kolkata", code: "CCU", lat: 22.65, lon: 88.44 }, { name: "Chennai", code: "MAA", lat: 12.99, lon: 80.18 }, { name: "Hyderabad", code: "HYD", lat: 17.24, lon: 78.42 },
+            // Africa
+            { name: "Casablanca", code: "CMN", lat: 33.36, lon: -7.58 }, { name: "Cape Town", code: "CPT", lat: -33.96, lon: 18.60 }, { name: "Accra", code: "ACC", lat: 5.60, lon: -0.16 },
+            // Oceania
+            { name: "Perth", code: "PER", lat: -31.94, lon: 115.96 }, { name: "Brisbane", code: "BNE", lat: -27.38, lon: 153.11 }
+
         ].map((city, i) => ({ ...city, id: i }));
 
         let state = { currentScreen: 'setup', departureCity: null, arrivalCity: null, durationMinutes: 60, flightLog: JSON.parse(localStorage.getItem('flightLog')) || [], timerInterval: null, globeInitialized: false, flightDistance: 0 };
@@ -143,7 +159,7 @@
             const container = document.getElementById('globe-container');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 2; // Adjusted camera position slightly for a better initial view
+            camera.position.z = 2;
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
@@ -151,35 +167,26 @@
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
             
-            // Lighting setup
-            scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3));
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(5, 3, 5);
             scene.add(dirLight);
 
             const textureLoader = new THREE.TextureLoader();
 
-            // STARFIELD BACKGROUND
             const starTexture = textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png');
-            const starGeometry = new THREE.SphereGeometry(100, 64, 64); // Larger sphere
+            const starGeometry = new THREE.SphereGeometry(100, 64, 64);
             const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide });
             const starSphere = new THREE.Mesh(starGeometry, starMaterial);
             scene.add(starSphere);
 
-            // REALISTIC EARTH
             const earthMaterial = new THREE.MeshPhongMaterial({
-                map: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg'),
-                // Specular map makes oceans reflective
-                specularMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png'),
-                // Bump map adds terrain depth
-                bumpMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png'),
-                bumpScale: 0.01,
-                shininess: 10 // Controls the sharpness of the reflection
+                map: textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg'),
+                shininess: 5 
             });
             earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), earthMaterial);
             scene.add(earth);
 
-            // Airport markers
             const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
             cities.forEach(city => {
                 const marker = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 16), markerMaterial.clone());
