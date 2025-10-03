@@ -1,423 +1,743 @@
 <!DOCTYPE html>
- <html lang="en">
- <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>FocusFlight (Working Version)</title>
-     <script src="https://cdn.tailwindcss.com"></script>
-     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-     <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
-    
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-     <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
-     <style>
-         body {
-             font-family: 'Inter', sans-serif;
-             background-color: #111827;
-             color: #F3F4F6;
-             overflow: hidden;
-         }
-         .screen { display: none; }
-         .screen.active { display: flex; }
-         #globe-container { cursor: grab; background-color: transparent; }
-         #globe-container:active { cursor: grabbing; }
-         #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; background-color: #2a2a2a; z-index: 10;}
-         .ui-overlay { z-index: 20; } /* Ensures UI is on top of the map */
-         .leaflet-control-attribution { font-size: 10px !important; background: rgba(0,0,0,0.6) !important; color: #ccc !important; }
-         .barcode {
-             font-family: 'Libre Barcode 39 Text', cursive; font-size: 60px; color: #E5E7EB;
-             text-align: center; overflow: hidden; white-space: nowrap;
-         }
-         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        
-         /* CSS for the pulsing destination marker */
-         @keyframes pulse-marker {
-             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
-             70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
-             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-         }
-         .pulse-marker {
-             background-color: #FBBF24;
-             border-radius: 50%;
-             width: 15px;
-             height: 15px;
-             border: 2px solid #fff;
-             animation: pulse-marker 2s infinite;
-         }
+<html lang="en">
 
-         /* Ultra smooth airplane movement */
-         .leaflet-marker-icon.airplane-marker {
-             transition: none !important;
-             will-change: transform;
-         }
-     </style>
- </head>
- <body class="w-screen h-screen flex items-center justify-center">
+<head>
 
-     <div id="setup-screen" class="screen active w-full h-full flex-col items-center justify-center p-4 sm:p-8">
-         <div class="text-center mb-4">
-             <h1 class="text-3xl sm:text-4xl font-bold text-white">Set Your Destination</h1>
-             <p class="text-md sm:text-lg text-gray-400">Rotate the globe to select Departure & Arrival.</p>
-         </div>
-         <div class="w-full max-w-4xl aspect-square sm:aspect-video rounded-lg relative mb-4" id="globe-container"></div>
-         <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full max-w-4xl">
-             <div class="flex-1 text-center"><p class="text-sm text-gray-400">DEPARTURE</p><p id="departure-text" class="text-xl sm:text-2xl font-bold text-white">- - -</p></div>
-             <div class="flex-1 text-center"><p class="text-sm text-gray-400">ARRIVAL</p><p id="arrival-text" class="text-xl sm:text-2xl font-bold text-white">- - -</p></div>
-         </div>
-         <div class="mt-4 w-full max-w-md">
-             <label for="duration-slider" class="block text-center text-gray-400 mb-2">Flight Time: <span id="duration-label" class="font-bold text-white">60</span> minutes</label>
-             <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-         </div>
-         <button id="confirm-flight-btn" disabled class="mt-6 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400">Generate Boarding Pass</button>
-         <button id="logbook-btn" class="absolute top-5 right-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Logbook</button>
-     </div>
+    <meta charset="UTF-8">
 
-     <div id="boarding-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
-          <div class="w-full max-w-sm bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 relative">
-              <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
-                  <div><p class="text-5xl font-black text-white" id="boarding-departure-code"></p><p class="text-gray-400" id="boarding-departure-city"></p></div>
-                  <div class="text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg><p class="text-xs text-center" id="boarding-distance"></p></div>
-                  <div class="text-right"><p class="text-5xl font-black text-white" id="boarding-arrival-code"></p><p class="text-gray-400" id="boarding-arrival-city"></p></div>
-              </div>
-              <div class="grid grid-cols-2 gap-4 mt-4 text-left">
-                  <div><p class="text-xs text-gray-400">FLIGHT NO.</p><p class="font-bold text-white" id="boarding-flight-no"></p></div>
-                  <div><p class="text-xs text-gray-400">DISTANCE</p><p class="font-bold text-white" id="boarding-distance-2"></p></div>
-                  <div><p class="text-xs text-gray-400">BOARDING</p><p class="font-bold text-white animate-pulse-slow">Now</p></div>
-                  <div><p class="text-xs text-gray-400">DATE</p><p class="font-bold text-white" id="boarding-date"></p></div>
-              </div>
-              <div class="mt-6"><p class="barcode" id="barcode-text"></p></div>
-          </div>
-          <div class="mt-8 text-center">
-              <div class="flex items-center justify-center gap-3"><svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg><h2 class="text-2xl font-bold">Airplane Mode</h2></div>
-              <p class="text-gray-400 mt-2">Prepare for a distraction-free journey.</p>
-          </div>
-          <button id="start-flight-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-16 rounded-lg transition-all hover:bg-amber-400 text-lg">Boarding</button>
-          <button id="boarding-back-btn" class="absolute top-5 left-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Back</button>
-     </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-     <div id="focus-screen" class="screen w-full h-full flex-col items-center justify-center bg-gray-900 relative">
-         <div id="map"></div>
-         <div class="ui-overlay absolute bottom-10 left-10 text-white bg-black/50 p-4 rounded-lg backdrop-blur-sm">
-             <p class="text-lg">Time Remaining</p><p id="time-remaining" class="text-5xl font-black">01:00:00</p>
-         </div>
-         <div class="ui-overlay absolute bottom-10 right-10 text-white text-right bg-black/50 p-4 rounded-lg backdrop-blur-sm">
-             <p class="text-lg">Distance Remaining</p><p id="distance-remaining" class="text-5xl font-black">0 km</p>
-         </div>
-         <button id="abort-flight-btn" class="ui-overlay absolute top-5 right-5 bg-red-600/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500">Abort Flight</button>
-     </div>
+    <title>FocusFlight (Working Version)</title>
 
-     <div id="summary-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/80"><h2 id="summary-title" class="text-5xl font-bold text-amber-400"></h2><p id="summary-text" class="text-xl text-gray-300 mt-4"></p><button id="summary-back-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg hover:bg-amber-400">Plan Next Flight</button></div>
-     <div id="logbook-screen" class="screen w-full h-full flex-col items-center justify-start p-8 bg-gray-900"><h2 class="text-4xl font-bold text-white mb-8">Flight Logbook</h2><div id="logbook-list" class="w-full max-w-2xl h-3/4 overflow-y-auto bg-gray-800 p-4 rounded-lg"></div><button id="logbook-back-btn" class="mt-8 bg-gray-700 text-white font-bold py-3 px-12 rounded-lg hover:bg-gray-600">Back to Globe</button></div>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
-     <script type="importmap">{"imports": {"three": "https://unpkg.com/three@0.157.0/build/three.module.js","three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"}}</script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-     <script type="module">
-         import * as THREE from 'three';
-         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        
-         const cities = [
-             // === Original Cities ===
-             { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 },
-             { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 },
-             { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 },
-             { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 },
-             { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 },
-             { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 },
-             // === Additional Cities ===
-             { name: "Salem (India)", code: "SXV", lat: 11.76, lon: 78.06 },
-             { name: "Atlanta", code: "ATL", lat: 33.64, lon: -84.42 },
-             { name: "Dallas", code: "DFW", lat: 32.89, lon: -97.04 },
-             { name: "Denver", code: "DEN", lat: 39.85, lon: -104.67 },
-             { name: "Seattle", code: "SEA", lat: 47.45, lon: -122.30 },
-             { name: "Miami", code: "MIA", lat: 25.79, lon: -80.29 },
-             { name: "Houston", code: "IAH", lat: 29.99, lon: -95.34 },
-             { name: "Montreal", code: "YUL", lat: 45.47, lon: -73.74 },
-             { name: "Las Vegas", code: "LAS", lat: 36.08, lon: -115.15 },
-             { name: "San Francisco", code: "SFO", lat: 37.62, lon: -122.37 },
-             { name: "Boston", code: "BOS", lat: 42.36, lon: -71.00 },
-             { name: "Santiago", code: "SCL", lat: -33.39, lon: -70.78 },
-             { name: "Caracas", code: "CCS", lat: 10.60, lon: -66.99 },
-             { name: "Moscow", code: "SVO", lat: 55.97, lon: 37.41 },
-             { name: "Dublin", code: "DUB", lat: 53.42, lon: -6.27 },
-             { name: "Zurich", code: "ZRH", lat: 47.46, lon: 8.54 },
-             { name: "Vienna", code: "VIE", lat: 48.11, lon: 16.56 },
-             { name: "Copenhagen", code: "CPH", lat: 55.61, lon: 12.65 },
-             { name: "Stockholm", code: "ARN", lat: 59.65, lon: 17.91 },
-             { name: "Oslo", code: "OSL", lat: 60.19, lon: 11.10 },
-             { name: "Athens", code: "ATH", lat: 37.93, lon: 23.94 },
-             { name: "Lisbon", code: "LIS", lat: 38.77, lon: -9.13 },
-             { name: "Prague", code: "PRG", lat: 50.10, lon: 14.26 },
-             { name: "Brussels", code: "BRU", lat: 50.90, lon: 4.48 },
-             { name: "Kuala Lumpur", code: "KUL", lat: 2.74, lon: 101.70 },
-             { name: "Manila", code: "MNL", lat: 14.50, lon: 121.01 },
-             { name: "Jakarta", code: "CGK", lat: -6.12, lon: 106.65 },
-             { name: "Taipei", code: "TPE", lat: 25.07, lon: 121.23 },
-             { name: "Riyadh", code: "RUH", lat: 24.95, lon: 46.70 },
-             { name: "Jeddah", code: "JED", lat: 21.67, lon: 39.15 },
-             { name: "Tel Aviv", code: "TLV", lat: 32.01, lon: 34.88 },
-             { name: "Karachi", code: "KHI", lat: 24.90, lon: 67.16 },
-             { name: "Kolkata", code: "CCU", lat: 22.65, lon: 88.44 },
-             { name: "Chennai", code: "MAA", lat: 12.99, lon: 80.18 },
-             { name: "Bengaluru", code: "BLR", lat: 13.19, lon: 77.70 },
-             { name: "Hyderabad", code: "HYD", lat: 17.24, lon: 78.42 },
-             { name: "Ho Chi Minh City", code: "SGN", lat: 10.81, lon: 106.65 },
-             { name: "Casablanca", code: "CMN", lat: 33.36, lon: -7.58 },
-             { name: "Cape Town", code: "CPT", lat: -33.96, lon: 18.60 },
-             { name: "Algiers", code: "ALG", lat: 36.69, lon: 3.21 },
-             { name: "Accra", code: "ACC", lat: 5.60, lon: -0.16 },
-             { name: "Dakar", code: "DSS", lat: 14.67, lon: -17.22 },
-             { name: "Perth", code: "PER", lat: -31.94, lon: 115.96 },
-             { name: "Brisbane", code: "BNE", lat: -27.38, lon: 153.11 },
-             { name: "Wellington", code: "WLG", lat: -41.32, lon: 174.80 },
-             { name: "Nadi", code: "NAN", lat: -17.75, lon: 177.44 },
-             { name: "Panama City", code: "PTY", lat: 9.07, lon: -79.38 },
-             { name: "Helsinki", code: "HEL", lat: 60.31, lon: 24.96 },
-             { name: "Warsaw", code: "WAW", lat: 52.16, lon: 20.96 },
-             { name: "Budapest", code: "BUD", lat: 47.43, lon: 19.25 }
-         ].map((city, i) => ({ ...city, id: i }));
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-         let state = { currentScreen: 'setup', departureCity: null, arrivalCity: null, durationMinutes: 60, flightLog: JSON.parse(localStorage.getItem('flightLog')) || [], timerInterval: null, globeInitialized: false, flightDistance: 0 };
-         const screens = { setup: document.getElementById('setup-screen'), boarding: document.getElementById('boarding-screen'), focus: document.getElementById('focus-screen'), summary: document.getElementById('summary-screen'), logbook: document.getElementById('logbook-screen') };
-         let scene, camera, renderer, controls, earth, raycaster, mouse, cityMarkers = new THREE.Group(), flightPathArc = null;
-         let map;
-         let planeMarker;
-         let flightAnimation = null;
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
 
-         function initGlobe() {
-             if (state.globeInitialized) return;
-             const container = document.getElementById('globe-container');
-             scene = new THREE.Scene();
-             camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-             camera.position.z = 2; // Adjusted camera position slightly for a better initial view
-             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-             renderer.setSize(container.clientWidth, container.clientHeight);
-             renderer.setPixelRatio(window.devicePixelRatio);
-             container.appendChild(renderer.domElement);
-             controls = new OrbitControls(camera, renderer.domElement);
-             controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
-            
-             // Lighting setup
-             scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
-             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-             dirLight.position.set(5, 3, 5);
-             scene.add(dirLight);
+    
 
-             const textureLoader = new THREE.TextureLoader();
+    <link rel="preconnect" href="https://fonts.googleapis.com">
 
-             // STARFIELD BACKGROUND
-             const starTexture = textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png');
-             const starGeometry = new THREE.SphereGeometry(100, 64, 64); // Larger sphere
-             const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide });
-             const starSphere = new THREE.Mesh(starGeometry, starMaterial);
-             scene.add(starSphere);
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-             // REALISTIC EARTH
-             const earthMaterial = new THREE.MeshPhongMaterial({
-                 map: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg'),
-                 // Specular map makes oceans reflective
-                 specularMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png'),
-                 // Bump map adds terrain depth
-                 bumpMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png'),
-                 bumpScale: 0.01,
-                 shininess: 10 // Controls the sharpness of the reflection
-             });
-             earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), earthMaterial);
-             scene.add(earth);
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 
-             // Airport markers
-             const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
-             cities.forEach(city => {
-                 const marker = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 16), markerMaterial.clone());
-                 const pos = latLonToVector3(city.lat, city.lon, 1);
-                 marker.position.set(pos.x, pos.y, pos.z); marker.userData.city = city; cityMarkers.add(marker);
-             });
-             earth.add(cityMarkers);
-             raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2();
-             window.addEventListener('resize', () => { camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); });
-             container.addEventListener('click', onGlobeClick);
-             animate(); state.globeInitialized = true;
-         }
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
 
-         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
-         function latLonToVector3(lat, lon, radius) { const phi = (90 - lat) * (Math.PI / 180); const theta = (lon + 180) * (Math.PI / 180); return new THREE.Vector3(-radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta)); }
-         function onGlobeClick(event) { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); mouse.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1; mouse.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(cityMarkers.children); if (intersects.length > 0) { handleCityClick(intersects[0].object.userData.city); } }
-         function handleCityClick(city) { if (!state.departureCity) { state.departureCity = city; highlightMarker(city, true); } else if (!state.arrivalCity && city.id !== state.departureCity.id) { state.arrivalCity = city; highlightMarker(city, true); drawFlightArc(); } else { highlightMarker(state.departureCity, false); if(state.arrivalCity) highlightMarker(state.arrivalCity, false); if(flightPathArc) earth.remove(flightPathArc); state.departureCity = city; state.arrivalCity = null; highlightMarker(city, true); } updateUI(); }
-         function highlightMarker(city, selected) { const marker = cityMarkers.children.find(m => m.userData.city.id === city.id); if(marker) { marker.material.color.set(selected ? 0xffffff : 0xFBBF24); marker.scale.set(selected ? 1.5 : 1, selected ? 1.5 : 1, selected ? 1.5 : 1); } }
-         function drawFlightArc() { if (flightPathArc) earth.remove(flightPathArc); const startPos = latLonToVector3(state.departureCity.lat, state.departureCity.lon, 1); const endPos = latLonToVector3(state.arrivalCity.lat, state.arrivalCity.lon, 1); const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5); midPoint.normalize().multiplyScalar(midPoint.length() + startPos.distanceTo(endPos) * 0.4); const curve = new THREE.QuadraticBezierCurve3(startPos, midPoint, endPos); const points = curve.getPoints(50); const geometry = new THREE.BufferGeometry().setFromPoints(points); flightPathArc = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xFBBF24, linewidth: 2, transparent: true, opacity: 0.8 })); earth.add(flightPathArc); }
-        
-         function navigateTo(screenName) { Object.values(screens).forEach(s => s.classList.remove('active')); screens[screenName].classList.add('active'); state.currentScreen = screenName; if (screenName === 'setup' && !state.globeInitialized) initGlobe(); }
-         function updateUI() { document.getElementById('departure-text').textContent = state.departureCity ? `${state.departureCity.name} (${state.departureCity.code})` : '- - -'; document.getElementById('arrival-text').textContent = state.arrivalCity ? `${state.arrivalCity.name} (${state.arrivalCity.code})` : '- - -'; document.getElementById('confirm-flight-btn').disabled = !(state.departureCity && state.arrivalCity); }
-        
-         function setupBoardingPass() {
-             const { departureCity, arrivalCity } = state;
-             const R = 6371; // Earth radius in km
-             const dLat = (arrivalCity.lat - departureCity.lat) * Math.PI / 180;
-             const dLon = (arrivalCity.lon - departureCity.lon) * Math.PI / 180;
-             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(departureCity.lat * Math.PI / 180) * Math.cos(arrivalCity.lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-             const distance = Math.round(R * c);
-            
-             state.flightDistance = distance;
 
-             const flightNo = `FF${Math.floor(1000 + Math.random() * 9000)}`; const date = new Date(); const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-             document.getElementById('boarding-departure-code').textContent = departureCity.code; document.getElementById('boarding-departure-city').textContent = departureCity.name;
-             document.getElementById('boarding-arrival-code').textContent = arrivalCity.code; document.getElementById('boarding-arrival-city').textContent = arrivalCity.name;
-             document.getElementById('boarding-distance').textContent = `${distance} km`; document.getElementById('boarding-distance-2').textContent = `${distance} km`;
-             document.getElementById('boarding-flight-no').textContent = flightNo; document.getElementById('boarding-date').textContent = formattedDate; document.getElementById('barcode-text').textContent = `*${flightNo} ${arrivalCity.code}*`;
-         }
 
-         function startFlight() {
-             navigateTo('focus');
-             const { departureCity, arrivalCity } = state;
+    <style>
 
-             const calculateBearing = (startLat, startLng, destLat, destLng) => {
-                 startLat = startLat * Math.PI / 180;
-                 startLng = startLng * Math.PI / 180;
-                 destLat = destLat * Math.PI / 180;
-                 destLng = destLng * Math.PI / 180;
+        body {
 
-                 let y = Math.sin(destLng - startLng) * Math.cos(destLat);
-                 let x = Math.cos(startLat) * Math.sin(destLat) - Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-                 let brng = Math.atan2(y, x);
-                 brng = brng * 180 / Math.PI;
-                 return (brng + 360) % 360;
-             };
-            
-             map = L.map('map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
-            
-             L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-                 maxZoom: 20,
-                 attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-             }).addTo(map);
+            font-family: 'Inter', sans-serif;
 
-             const latlngs = [[departureCity.lat, departureCity.lon], [arrivalCity.lat, arrivalCity.lon]];
-             L.polyline(latlngs, { color: '#FBBF24', weight: 2, opacity: 0.7, dashArray: '5, 10' }).addTo(map);
+            background-color: #111827;
 
-             const destinationIcon = L.divIcon({ className: 'pulse-marker', iconSize: [15, 15] });
-             L.marker([arrivalCity.lat, arrivalCity.lon], { icon: destinationIcon }).addTo(map);
+            color: #F3F4F6;
 
-             const navigationArrowSvg = `
-                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" stroke-width="1.5">
-                     <path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#FBBF24" stroke="#FFFFFF" stroke-width="1"/>
-                 </svg>
-             `;
-            
-             const planeIcon = L.divIcon({
-                 html: navigationArrowSvg,
-                 className: 'airplane-marker',
-                 iconSize: [36, 36],
-                 iconAnchor: [18, 18],
-             });
-            
-             planeMarker = L.marker([departureCity.lat, departureCity.lon], {
-                 icon: planeIcon,
-                 rotationAngle: 0,
-                 rotationOrigin: 'center center'
-             });
+            overflow: hidden;
 
-             const initialBearing = calculateBearing(departureCity.lat, departureCity.lon, arrivalCity.lat, arrivalCity.lon);
-             planeMarker.setRotationAngle(initialBearing);
-             planeMarker.addTo(map);
+        }
 
-             map.fitBounds(latlngs, { padding: [50, 50] });
-            
-             setTimeout(() => {
-                 map.flyTo([departureCity.lat, departureCity.lon], 12, { duration: 4 });
+        .screen { display: none; }
 
-                 map.once('zoomend', () => {
-                     const totalSeconds = state.durationMinutes * 60;
-                     let startTime = performance.now();
-                     const initialDistance = state.flightDistance;
-                    
-                     function animateFlightContinuous(currentTime) {
-                         const elapsedSeconds = (currentTime - startTime) / 1000;
-                         const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
-                         const progress = Math.min(1, elapsedSeconds / totalSeconds);
-                        
-                         const hours = Math.floor(remainingSeconds / 3600);
-                         const minutes = Math.floor((remainingSeconds % 3600) / 60);
-                         const seconds = Math.floor(remainingSeconds % 60);
-                         document.getElementById('time-remaining').textContent =
-                             `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                         document.getElementById('distance-remaining').textContent =
-                             `${Math.round(initialDistance * (1 - progress))} km`;
+        .screen.active { display: flex; }
 
-                         const newLat = departureCity.lat + (arrivalCity.lat - departureCity.lat) * progress;
-                         const newLon = departureCity.lon + (arrivalCity.lon - departureCity.lon) * progress;
-                        
-                         const bearing = calculateBearing(newLat, newLon, arrivalCity.lat, arrivalCity.lon);
-                        
-                         planeMarker.setLatLng([newLat, newLon]);
-                         planeMarker.setRotationAngle(bearing);
-                        
-                         map.panTo([newLat, newLon], { animate: false });
+        /* === CSS CHANGE HERE === */
 
-                         if (remainingSeconds > 0) {
-                             flightAnimation = requestAnimationFrame(animateFlightContinuous);
-                         } else {
-                             endFlight(true);
-                         }
-                     }
-                    
-                     flightAnimation = requestAnimationFrame(animateFlightContinuous);
-                 });
-             }, 1500);
-         }
+        #globe-container { cursor: grab; background-color: transparent; }
 
-         function endFlight(completed) {
-             if (flightAnimation) {
-                 cancelAnimationFrame(flightAnimation);
-                 flightAnimation = null;
-             }
-             if (map) { map.remove(); map = null; }
-             navigateTo('summary');
-             const summaryTitle = document.getElementById('summary-title'); const summaryText = document.getElementById('summary-text');
-             summaryTitle.classList.remove('text-red-500');
-             if (completed) {
-                 summaryTitle.textContent = "Destination Reached"; summaryText.textContent = `You've completed your ${state.durationMinutes} minute flight from ${state.departureCity.name} to ${state.arrivalCity.name}.`;
-                 const logEntry = { date: new Date().toISOString(), departure: state.departureCity.name, arrival: state.arrivalCity.name, duration: state.durationMinutes };
-                 state.flightLog.push(logEntry); localStorage.setItem('flightLog', JSON.stringify(state.flightLog));
-             } else {
-                 summaryTitle.textContent = "Flight Aborted"; summaryTitle.classList.add('text-red-500'); summaryText.textContent = "Your flight was aborted. Try to stay focused next time!";
-             }
-         }
+        #globe-container:active { cursor: grabbing; }
 
-         function resetSetup() {
-             if(state.departureCity) highlightMarker(state.departureCity, false); if(state.arrivalCity) highlightMarker(state.arrivalCity, false);
-             if(flightPathArc) earth.remove(flightPathArc);
-             state.departureCity = null; state.arrivalCity = null; updateUI(); navigateTo('setup');
-         }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; background-color: #2a2a2a; z-index: 10;}
 
-         function showLogbook() {
-             const logbookList = document.getElementById('logbook-list'); logbookList.innerHTML = '';
-             if (state.flightLog.length === 0) { logbookList.innerHTML = `<p class="text-gray-400 text-center">No flights logged yet.</p>`; return; }
-             [...state.flightLog].reverse().forEach(flight => {
-                 const flightEl = document.createElement('div'); flightEl.className = 'bg-gray-700 p-4 rounded-lg mb-3';
-                 flightEl.innerHTML = `<div class="flex justify-between items-center"><p class="font-bold text-white">${flight.departure} &rarr; ${flight.arrival}</p><p class="text-amber-400">${flight.duration} min</p></div><p class="text-xs text-gray-400 mt-1">${new Date(flight.date).toLocaleString()}</p>`;
-                 logbookList.appendChild(flightEl);
-             });
-             navigateTo('logbook');
-         }
-        
-         document.getElementById('duration-slider').addEventListener('input', (e) => {
-             state.durationMinutes = parseInt(e.target.value, 10);
-             document.getElementById('duration-label').textContent = `${state.durationMinutes}`;
-         });
-         document.getElementById('confirm-flight-btn').addEventListener('click', () => { setupBoardingPass(); navigateTo('boarding'); });
-         document.getElementById('boarding-back-btn').addEventListener('click', () => navigateTo('setup'));
-         document.getElementById('start-flight-btn').addEventListener('click', startFlight);
-         document.getElementById('abort-flight-btn').addEventListener('click', () => endFlight(false));
-         document.getElementById('summary-back-btn').addEventListener('click', resetSetup);
-         document.getElementById('logbook-btn').addEventListener('click', showLogbook);
-         document.getElementById('logbook-back-btn').addEventListener('click', () => navigateTo('setup'));
-        
-         navigateTo('setup');
-     </script>
- </body>
- </html>
+        .ui-overlay { z-index: 20; } /* Ensures UI is on top of the map */
+
+        .leaflet-control-attribution { font-size: 10px !important; background: rgba(0,0,0,0.6) !important; color: #ccc !important; }
+
+        .barcode {
+
+            font-family: 'Libre Barcode 39 Text', cursive; font-size: 60px; color: #E5E7EB;
+
+            text-align: center; overflow: hidden; white-space: nowrap;
+
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        
+
+        /* CSS for the pulsing destination marker */
+
+        @keyframes pulse-marker {
+
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+
+            70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+
+        }
+
+        .pulse-marker {
+
+            background-color: #FBBF24;
+
+            border-radius: 50%;
+
+            width: 15px;
+
+            height: 15px;
+
+            border: 2px solid #fff;
+
+            animation: pulse-marker 2s infinite;
+
+        }
+
+
+
+        /* Ultra smooth airplane movement */
+
+        .leaflet-marker-icon.airplane-marker {
+
+            transition: none !important;
+
+            will-change: transform;
+
+        }
+
+    </style>
+
+</head>
+
+<body class="w-screen h-screen flex items-center justify-center">
+
+
+
+    <div id="setup-screen" class="screen active w-full h-full flex-col items-center justify-center p-4 sm:p-8">
+
+        <div class="text-center mb-4">
+
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Set Your Destination</h1>
+
+            <p class="text-md sm:text-lg text-gray-400">Rotate the globe to select Departure & Arrival.</p>
+
+        </div>
+
+        <div class="w-full max-w-4xl aspect-square sm:aspect-video rounded-lg relative mb-4" id="globe-container"></div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full max-w-4xl">
+
+            <div class="flex-1 text-center"><p class="text-sm text-gray-400">DEPARTURE</p><p id="departure-text" class="text-xl sm:text-2xl font-bold text-white">- - -</p></div>
+
+            <div class="flex-1 text-center"><p class="text-sm text-gray-400">ARRIVAL</p><p id="arrival-text" class="text-xl sm:text-2xl font-bold text-white">- - -</p></div>
+
+        </div>
+
+        <div class="mt-4 w-full max-w-md">
+
+            <label for="duration-slider" class="block text-center text-gray-400 mb-2">Flight Time: <span id="duration-label" class="font-bold text-white">60</span> minutes</label>
+
+            <input id="duration-slider" type="range" min="15" max="180" value="60" step="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+
+        </div>
+
+        <button id="confirm-flight-btn" disabled class="mt-6 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed hover:bg-amber-400">Generate Boarding Pass</button>
+
+        <button id="logbook-btn" class="absolute top-5 right-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Logbook</button>
+
+    </div>
+
+
+
+    <div id="boarding-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/50 backdrop-blur-sm">
+
+         <div class="w-full max-w-sm bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-700 relative">
+
+             <div class="flex justify-between items-center pb-4 border-b-2 border-dashed border-gray-600">
+
+                 <div><p class="text-5xl font-black text-white" id="boarding-departure-code"></p><p class="text-gray-400" id="boarding-departure-city"></p></div>
+
+                 <div class="text-gray-400"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg><p class="text-xs text-center" id="boarding-distance"></p></div>
+
+                 <div class="text-right"><p class="text-5xl font-black text-white" id="boarding-arrival-code"></p><p class="text-gray-400" id="boarding-arrival-city"></p></div>
+
+             </div>
+
+             <div class="grid grid-cols-2 gap-4 mt-4 text-left">
+
+                 <div><p class="text-xs text-gray-400">FLIGHT NO.</p><p class="font-bold text-white" id="boarding-flight-no"></p></div>
+
+                 <div><p class="text-xs text-gray-400">DISTANCE</p><p class="font-bold text-white" id="boarding-distance-2"></p></div>
+
+                 <div><p class="text-xs text-gray-400">BOARDING</p><p class="font-bold text-white animate-pulse-slow">Now</p></div>
+
+                 <div><p class="text-xs text-gray-400">DATE</p><p class="font-bold text-white" id="boarding-date"></p></div>
+
+             </div>
+
+             <div class="mt-6"><p class="barcode" id="barcode-text"></p></div>
+
+         </div>
+
+         <div class="mt-8 text-center">
+
+             <div class="flex items-center justify-center gap-3"><svg class="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg><h2 class="text-2xl font-bold">Airplane Mode</h2></div>
+
+             <p class="text-gray-400 mt-2">Prepare for a distraction-free journey.</p>
+
+         </div>
+
+         <button id="start-flight-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-16 rounded-lg transition-all hover:bg-amber-400 text-lg">Boarding</button>
+
+         <button id="boarding-back-btn" class="absolute top-5 left-5 bg-gray-700/50 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600/50">Back</button>
+
+    </div>
+
+
+
+    <div id="focus-screen" class="screen w-full h-full flex-col items-center justify-center bg-gray-900 relative">
+
+        <div id="map"></div>
+
+        <div class="ui-overlay absolute bottom-10 left-10 text-white bg-black/50 p-4 rounded-lg backdrop-blur-sm">
+
+            <p class="text-lg">Time Remaining</p><p id="time-remaining" class="text-5xl font-black">01:00:00</p>
+
+        </div>
+
+        <div class="ui-overlay absolute bottom-10 right-10 text-white text-right bg-black/50 p-4 rounded-lg backdrop-blur-sm">
+
+            <p class="text-lg">Distance Remaining</p><p id="distance-remaining" class="text-5xl font-black">0 km</p>
+
+        </div>
+
+        <button id="abort-flight-btn" class="ui-overlay absolute top-5 right-5 bg-red-600/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500">Abort Flight</button>
+
+    </div>
+
+
+
+    <div id="summary-screen" class="screen w-full h-full flex-col items-center justify-center p-8 bg-black/80"><h2 id="summary-title" class="text-5xl font-bold text-amber-400"></h2><p id="summary-text" class="text-xl text-gray-300 mt-4"></p><button id="summary-back-btn" class="mt-8 bg-amber-500 text-gray-900 font-bold py-3 px-12 rounded-lg hover:bg-amber-400">Plan Next Flight</button></div>
+
+    <div id="logbook-screen" class="screen w-full h-full flex-col items-center justify-start p-8 bg-gray-900"><h2 class="text-4xl font-bold text-white mb-8">Flight Logbook</h2><div id="logbook-list" class="w-full max-w-2xl h-3/4 overflow-y-auto bg-gray-800 p-4 rounded-lg"></div><button id="logbook-back-btn" class="mt-8 bg-gray-700 text-white font-bold py-3 px-12 rounded-lg hover:bg-gray-600">Back to Globe</button></div>
+
+
+
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+    <script type="importmap">{"imports": {"three": "https://unpkg.com/three@0.157.0/build/three.module.js","three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"}}</script>
+
+
+
+    <script type="module">
+
+        import * as THREE from 'three';
+
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        
+
+        const cities = [
+
+            { name: "New York", code: "JFK", lat: 40.64, lon: -73.77 }, { name: "Los Angeles", code: "LAX", lat: 33.94, lon: -118.40 }, { name: "Chicago", code: "ORD", lat: 41.97, lon: -87.90 }, { name: "Toronto", code: "YYZ", lat: 43.67, lon: -79.62 }, { name: "Mexico City", code: "MEX", lat: 19.43, lon: -99.07 }, { name: "Vancouver", code: "YVR", lat: 49.19, lon: -123.18 },
+
+            { name: "São Paulo", code: "GRU", lat: -23.43, lon: -46.47 }, { name: "Buenos Aires", code: "EZE", lat: -34.82, lon: -58.53 }, { name: "Bogotá", code: "BOG", lat: 4.70, lon: -74.14 }, { name: "Lima", code: "LIM", lat: -12.02, lon: -77.11 }, { name: "Rio de Janeiro", code: "GIG", lat: -22.81, lon: -43.25 },
+
+            { name: "London", code: "LHR", lat: 51.47, lon: -0.45 }, { name: "Paris", code: "CDG", lat: 49.00, lon: 2.59 }, { name: "Istanbul", code: "IST", lat: 41.27, lon: 28.75 }, { name: "Amsterdam", code: "AMS", lat: 52.31, lon: 4.76 }, { name: "Frankfurt", code: "FRA", lat: 50.03, lon: 8.56 }, { name: "Madrid", code: "MAD", lat: 40.49, lon: -3.56 }, { name: "Rome", code: "FCO", lat: 41.80, lon: 12.23 },
+
+            { name: "Tokyo", code: "HND", lat: 35.54, lon: 139.77 }, { name: "Dubai", code: "DXB", lat: 25.25, lon: 55.36 }, { name: "Singapore", code: "SIN", lat: 1.36, lon: 103.99 }, { name: "Hong Kong", code: "HKG", lat: 22.30, lon: 113.91 }, { name: "Shanghai", code: "PVG", lat: 31.14, lon: 121.80 }, { name: "Seoul", code: "ICN", lat: 37.46, lon: 126.44 }, { name: "Doha", code: "DOH", lat: 25.27, lon: 51.56 }, { name: "Bangkok", code: "BKK", lat: 13.69, lon: 100.75 }, { name: "Mumbai", code: "BOM", lat: 19.08, lon: 72.86 }, { name: "Delhi", code: "DEL", lat: 28.55, lon: 77.10 }, { name: "Beijing", code: "PEK", lat: 40.08, lon: 116.58 }, { name: "Hosur", code: "HSR", lat: 12.74, lon: 77.82 },
+
+            { name: "Cairo", code: "CAI", lat: 30.11, lon: 31.40 }, { name: "Johannesburg", code: "JNB", lat: -26.13, lon: 28.24 }, { name: "Lagos", code: "LOS", lat: 6.57, lon: 3.32 }, { name: "Nairobi", code: "NBO", lat: -1.33, lon: 36.92 }, { name: "Addis Ababa", code: "ADD", lat: 8.97, lon: 38.79 },
+
+            { name: "Sydney", code: "SYD", lat: -33.94, lon: 151.17 }, { name: "Melbourne", code: "MEL", lat: -37.66, lon: 144.84 }, { name: "Auckland", code: "AKL", lat: -37.00, lon: 174.78 }
+
+        ].map((city, i) => ({ ...city, id: i }));
+
+
+
+        let state = { currentScreen: 'setup', departureCity: null, arrivalCity: null, durationMinutes: 60, flightLog: JSON.parse(localStorage.getItem('flightLog')) || [], timerInterval: null, globeInitialized: false, flightDistance: 0 };
+
+        const screens = { setup: document.getElementById('setup-screen'), boarding: document.getElementById('boarding-screen'), focus: document.getElementById('focus-screen'), summary: document.getElementById('summary-screen'), logbook: document.getElementById('logbook-screen') };
+
+        let scene, camera, renderer, controls, earth, raycaster, mouse, cityMarkers = new THREE.Group(), flightPathArc = null;
+
+        let map;
+
+        let planeMarker;
+
+        let flightAnimation = null;
+
+
+
+        function initGlobe() {
+
+            if (state.globeInitialized) return;
+
+            const container = document.getElementById('globe-container');
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+
+            camera.position.z = 2; // Adjusted camera position slightly for a better initial view
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+            renderer.setSize(container.clientWidth, container.clientHeight);
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+
+            controls.enableDamping = true; controls.dampingFactor = 0.05; controls.minDistance = 1.5; controls.maxDistance = 5; controls.enablePan = false;
+
+            
+
+            // Lighting setup
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3)); // Soft ambient light
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+
+            dirLight.position.set(5, 3, 5);
+
+            scene.add(dirLight);
+
+
+
+            const textureLoader = new THREE.TextureLoader();
+
+
+
+            // STARFIELD BACKGROUND
+
+            const starTexture = textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/night-sky.png');
+
+            const starGeometry = new THREE.SphereGeometry(100, 64, 64); // Larger sphere
+
+            const starMaterial = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide });
+
+            const starSphere = new THREE.Mesh(starGeometry, starMaterial);
+
+            scene.add(starSphere);
+
+
+
+            // REALISTIC EARTH
+
+            const earthMaterial = new THREE.MeshPhongMaterial({
+
+                map: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-day.jpg'),
+
+                // Specular map makes oceans reflective
+
+                specularMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-water.png'),
+
+                // Bump map adds terrain depth
+
+                bumpMap: textureLoader.load('https://unpkg.com/three-globe@2.27.2/example/img/earth-topology.png'),
+
+                bumpScale: 0.01,
+
+                shininess: 10 // Controls the sharpness of the reflection
+
+            });
+
+            earth = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 64), earthMaterial);
+
+            scene.add(earth);
+
+
+
+            // Airport markers
+
+            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
+
+            cities.forEach(city => {
+
+                const marker = new THREE.Mesh(new THREE.SphereGeometry(0.008, 16, 16), markerMaterial.clone());
+
+                const pos = latLonToVector3(city.lat, city.lon, 1);
+
+                marker.position.set(pos.x, pos.y, pos.z); marker.userData.city = city; cityMarkers.add(marker);
+
+            });
+
+            earth.add(cityMarkers);
+
+            raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2();
+
+            window.addEventListener('resize', () => { camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); });
+
+            container.addEventListener('click', onGlobeClick);
+
+            animate(); state.globeInitialized = true;
+
+        }
+
+
+
+        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+
+        function latLonToVector3(lat, lon, radius) { const phi = (90 - lat) * (Math.PI / 180); const theta = (lon + 180) * (Math.PI / 180); return new THREE.Vector3(-radius * Math.sin(phi) * Math.cos(theta), radius * Math.cos(phi), radius * Math.sin(phi) * Math.sin(theta)); }
+
+        function onGlobeClick(event) { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); mouse.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1; mouse.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(cityMarkers.children); if (intersects.length > 0) { handleCityClick(intersects[0].object.userData.city); } }
+
+        function handleCityClick(city) { if (!state.departureCity) { state.departureCity = city; highlightMarker(city, true); } else if (!state.arrivalCity && city.id !== state.departureCity.id) { state.arrivalCity = city; highlightMarker(city, true); drawFlightArc(); } else { highlightMarker(state.departureCity, false); if(state.arrivalCity) highlightMarker(state.arrivalCity, false); if(flightPathArc) earth.remove(flightPathArc); state.departureCity = city; state.arrivalCity = null; highlightMarker(city, true); } updateUI(); }
+
+        function highlightMarker(city, selected) { const marker = cityMarkers.children.find(m => m.userData.city.id === city.id); if(marker) { marker.material.color.set(selected ? 0xffffff : 0xFBBF24); marker.scale.set(selected ? 1.5 : 1, selected ? 1.5 : 1, selected ? 1.5 : 1); } }
+
+        function drawFlightArc() { if (flightPathArc) earth.remove(flightPathArc); const startPos = latLonToVector3(state.departureCity.lat, state.departureCity.lon, 1); const endPos = latLonToVector3(state.arrivalCity.lat, state.arrivalCity.lon, 1); const midPoint = new THREE.Vector3().addVectors(startPos, endPos).multiplyScalar(0.5); midPoint.normalize().multiplyScalar(midPoint.length() + startPos.distanceTo(endPos) * 0.4); const curve = new THREE.QuadraticBezierCurve3(startPos, midPoint, endPos); const points = curve.getPoints(50); const geometry = new THREE.BufferGeometry().setFromPoints(points); flightPathArc = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xFBBF24, linewidth: 2, transparent: true, opacity: 0.8 })); earth.add(flightPathArc); }
+
+        
+
+        function navigateTo(screenName) { Object.values(screens).forEach(s => s.classList.remove('active')); screens[screenName].classList.add('active'); state.currentScreen = screenName; if (screenName === 'setup' && !state.globeInitialized) initGlobe(); }
+
+        function updateUI() { document.getElementById('departure-text').textContent = state.departureCity ? `${state.departureCity.name} (${state.departureCity.code})` : '- - -'; document.getElementById('arrival-text').textContent = state.arrivalCity ? `${state.arrivalCity.name} (${state.arrivalCity.code})` : '- - -'; document.getElementById('confirm-flight-btn').disabled = !(state.departureCity && state.arrivalCity); }
+
+        
+
+        function setupBoardingPass() {
+
+            const { departureCity, arrivalCity } = state;
+
+            const R = 6371; // Earth radius in km
+
+            const dLat = (arrivalCity.lat - departureCity.lat) * Math.PI / 180;
+
+            const dLon = (arrivalCity.lon - departureCity.lon) * Math.PI / 180;
+
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(departureCity.lat * Math.PI / 180) * Math.cos(arrivalCity.lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            const distance = Math.round(R * c);
+
+            
+
+            state.flightDistance = distance;
+
+
+
+            const flightNo = `FF${Math.floor(1000 + Math.random() * 9000)}`; const date = new Date(); const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+
+            document.getElementById('boarding-departure-code').textContent = departureCity.code; document.getElementById('boarding-departure-city').textContent = departureCity.name;
+
+            document.getElementById('boarding-arrival-code').textContent = arrivalCity.code; document.getElementById('boarding-arrival-city').textContent = arrivalCity.name;
+
+            document.getElementById('boarding-distance').textContent = `${distance} km`; document.getElementById('boarding-distance-2').textContent = `${distance} km`;
+
+            document.getElementById('boarding-flight-no').textContent = flightNo; document.getElementById('boarding-date').textContent = formattedDate; document.getElementById('barcode-text').textContent = `*${flightNo} ${arrivalCity.code}*`;
+
+        }
+
+
+
+        function startFlight() {
+
+            navigateTo('focus');
+
+            const { departureCity, arrivalCity } = state;
+
+
+
+            const calculateBearing = (startLat, startLng, destLat, destLng) => {
+
+                startLat = startLat * Math.PI / 180;
+
+                startLng = startLng * Math.PI / 180;
+
+                destLat = destLat * Math.PI / 180;
+
+                destLng = destLng * Math.PI / 180;
+
+
+
+                let y = Math.sin(destLng - startLng) * Math.cos(destLat);
+
+                let x = Math.cos(startLat) * Math.sin(destLat) - Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
+
+                let brng = Math.atan2(y, x);
+
+                brng = brng * 180 / Math.PI;
+
+                return (brng + 360) % 360;
+
+            };
+
+            
+
+            map = L.map('map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
+
+            
+
+            L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+
+                maxZoom: 20,
+
+                attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
+            }).addTo(map);
+
+
+
+            const latlngs = [[departureCity.lat, departureCity.lon], [arrivalCity.lat, arrivalCity.lon]];
+
+            L.polyline(latlngs, { color: '#FBBF24', weight: 2, opacity: 0.7, dashArray: '5, 10' }).addTo(map);
+
+
+
+            const destinationIcon = L.divIcon({ className: 'pulse-marker', iconSize: [15, 15] });
+
+            L.marker([arrivalCity.lat, arrivalCity.lon], { icon: destinationIcon }).addTo(map);
+
+
+
+            const navigationArrowSvg = `
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" stroke-width="1.5">
+
+                    <path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#FBBF24" stroke="#FFFFFF" stroke-width="1"/>
+
+                </svg>
+
+            `;
+
+            
+
+            const planeIcon = L.divIcon({
+
+                html: navigationArrowSvg,
+
+                className: 'airplane-marker',
+
+                iconSize: [36, 36],
+
+                iconAnchor: [18, 18],
+
+            });
+
+            
+
+            planeMarker = L.marker([departureCity.lat, departureCity.lon], { 
+
+                icon: planeIcon,
+
+                rotationAngle: 0,
+
+                rotationOrigin: 'center center'
+
+            });
+
+
+
+            const initialBearing = calculateBearing(departureCity.lat, departureCity.lon, arrivalCity.lat, arrivalCity.lon);
+
+            planeMarker.setRotationAngle(initialBearing);
+
+            planeMarker.addTo(map);
+
+
+
+            map.fitBounds(latlngs, { padding: [50, 50] });
+
+            
+
+            setTimeout(() => {
+
+                map.flyTo([departureCity.lat, departureCity.lon], 12, { duration: 4 });
+
+
+
+                map.once('zoomend', () => {
+
+                    const totalSeconds = state.durationMinutes * 60;
+
+                    let startTime = performance.now();
+
+                    const initialDistance = state.flightDistance;
+
+                    
+
+                    function animateFlightContinuous(currentTime) {
+
+                        const elapsedSeconds = (currentTime - startTime) / 1000;
+
+                        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+                        const progress = Math.min(1, elapsedSeconds / totalSeconds);
+
+                        
+
+                        const hours = Math.floor(remainingSeconds / 3600);
+
+                        const minutes = Math.floor((remainingSeconds % 3600) / 60);
+
+                        const seconds = Math.floor(remainingSeconds % 60);
+
+                        document.getElementById('time-remaining').textContent = 
+
+                            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                        document.getElementById('distance-remaining').textContent = 
+
+                            `${Math.round(initialDistance * (1 - progress))} km`;
+
+
+
+                        const newLat = departureCity.lat + (arrivalCity.lat - departureCity.lat) * progress;
+
+                        const newLon = departureCity.lon + (arrivalCity.lon - departureCity.lon) * progress;
+
+                        
+
+                        const bearing = calculateBearing(newLat, newLon, arrivalCity.lat, arrivalCity.lon);
+
+                        
+
+                        planeMarker.setLatLng([newLat, newLon]);
+
+                        planeMarker.setRotationAngle(bearing);
+
+                        
+
+                        map.panTo([newLat, newLon], { animate: false });
+
+
+
+                        if (remainingSeconds > 0) {
+
+                            flightAnimation = requestAnimationFrame(animateFlightContinuous);
+
+                        } else {
+
+                            endFlight(true);
+
+                        }
+
+                    }
+
+                    
+
+                    flightAnimation = requestAnimationFrame(animateFlightContinuous);
+
+                });
+
+            }, 1500);
+
+        }
+
+
+
+        function endFlight(completed) {
+
+            if (flightAnimation) {
+
+                cancelAnimationFrame(flightAnimation);
+
+                flightAnimation = null;
+
+            }
+
+            if (map) { map.remove(); map = null; }
+
+            navigateTo('summary');
+
+            const summaryTitle = document.getElementById('summary-title'); const summaryText = document.getElementById('summary-text');
+
+            summaryTitle.classList.remove('text-red-500');
+
+            if (completed) {
+
+                summaryTitle.textContent = "Destination Reached"; summaryText.textContent = `You've completed your ${state.durationMinutes} minute flight from ${state.departureCity.name} to ${state.arrivalCity.name}.`;
+
+                const logEntry = { date: new Date().toISOString(), departure: state.departureCity.name, arrival: state.arrivalCity.name, duration: state.durationMinutes };
+
+                state.flightLog.push(logEntry); localStorage.setItem('flightLog', JSON.stringify(state.flightLog));
+
+            } else {
+
+                summaryTitle.textContent = "Flight Aborted"; summaryTitle.classList.add('text-red-500'); summaryText.textContent = "Your flight was aborted. Try to stay focused next time!";
+
+            }
+
+        }
+
+
+
+        function resetSetup() {
+
+            if(state.departureCity) highlightMarker(state.departureCity, false); if(state.arrivalCity) highlightMarker(state.arrivalCity, false);
+
+            if(flightPathArc) earth.remove(flightPathArc);
+
+            state.departureCity = null; state.arrivalCity = null; updateUI(); navigateTo('setup');
+
+        }
+
+
+
+        function showLogbook() {
+
+            const logbookList = document.getElementById('logbook-list'); logbookList.innerHTML = '';
+
+            if (state.flightLog.length === 0) { logbookList.innerHTML = `<p class="text-gray-400 text-center">No flights logged yet.</p>`; return; }
+
+            [...state.flightLog].reverse().forEach(flight => {
+
+                const flightEl = document.createElement('div'); flightEl.className = 'bg-gray-700 p-4 rounded-lg mb-3';
+
+                flightEl.innerHTML = `<div class="flex justify-between items-center"><p class="font-bold text-white">${flight.departure} &rarr; ${flight.arrival}</p><p class="text-amber-400">${flight.duration} min</p></div><p class="text-xs text-gray-400 mt-1">${new Date(flight.date).toLocaleString()}</p>`;
+
+                logbookList.appendChild(flightEl);
+
+            });
+
+            navigateTo('logbook');
+
+        }
+
+        
+
+        document.getElementById('duration-slider').addEventListener('input', (e) => { 
+
+            state.durationMinutes = parseInt(e.target.value, 10); 
+
+            document.getElementById('duration-label').textContent = `${state.durationMinutes}`;
+
+        });
+
+        document.getElementById('confirm-flight-btn').addEventListener('click', () => { setupBoardingPass(); navigateTo('boarding'); });
+
+        document.getElementById('boarding-back-btn').addEventListener('click', () => navigateTo('setup'));
+
+        document.getElementById('start-flight-btn').addEventListener('click', startFlight);
+
+        document.getElementById('abort-flight-btn').addEventListener('click', () => endFlight(false));
+
+        document.getElementById('summary-back-btn').addEventListener('click', resetSetup);
+
+        document.getElementById('logbook-btn').addEventListener('click', showLogbook);
+
+        document.getElementById('logbook-back-btn').addEventListener('click', () => navigateTo('setup'));
+
+        
+
+        navigateTo('setup');
+
+    </script>
+
+</body>
+
+</html>
